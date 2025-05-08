@@ -34,15 +34,14 @@ Pose Classification
 - Use a Graph Neural Network (GNN) to classify the detected pose into one of $C$ predefined yoga poses.
 
 - **Input**:
-  - A graph $ G_i = (V_i, E_i) $, where:
-    - $ V_i \in \mathbb{R}^{N \times d}$: Each node represents a detected joint (keypoint), encoded by its 2D coordinates and optionally other features (e.g., confidence scores).
-    - $ E_i $: Set of edges capturing anatomical or learned relationships between joints.
+  - A graph $G_i = (V_i, E_i)$, where:
+    - $V_i \in \mathbb{R}^{N \times d}$: Each node represents a detected joint (keypoint), encoded by its 2D coordinates and optionally other features (e.g., confidence scores).
+    - $E_i$: Set of edges capturing anatomical or learned relationships between joints.
 - **Output**:
-  - A class probability vector $ \hat{p}_i \in \mathbb{R}^{C} $ over $ C $ predefined yoga poses.
-  - Final predicted class:  
-    $$
-    \hat{c}_i = \arg\max_j \hat{p}_i^{(j)}
-    $$
+  - A class probability vector $\hat{p}_i \in \mathbb{R}^{C}$ over $C$ predefined yoga poses.
+  - Final predicted class:
+    
+    $\hat{c}_i = \arg\max_j \hat{p}_i^{(j)}$
 
 ---
 
