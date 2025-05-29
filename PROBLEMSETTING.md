@@ -2,7 +2,7 @@
 
 ### Overview
 
-The objective of this project is to develop a graph-based yoga pose detection pipeline utilizing a **Graph Neural Network (GNN)** architecture. To achieve this, we propose integrating **GNN** layers to fine-tune a pre-trained **Transformer** model, leveraging a **$<CLS>$** token for accurate classification of graph-represented poses. Our approach follows the **Mesh-Graphormer** architecture by incorporating **Graph Residual Blocks** into the attention mechanism of a pre-trained Transformer, such as **BERT**. The model will process two inputs: an image of a yoga pose and s stick-figure-like graph representation of the pose (encoded as positional embeddings), the output will be a classification of the detected yoga pose.  
+The objective of this project is to develop a graph-based yoga pose detection pipeline utilizing a **Graph Neural Network (GNN)** architecture. To achieve this, we propose integrating **GNN** layers to fine-tune a pre-trained **Transformer** model, leveraging a **`<CLS>`** token for accurate classification of graph-represented poses. Our approach follows the **Mesh-Graphormer** architecture by incorporating **Graph Residual Blocks** into the attention mechanism of a pre-trained Transformer, such as **BERT**. The model will process two inputs: an image of a yoga pose and s stick-figure-like graph representation of the pose (encoded as positional embeddings), the output will be a classification of the detected yoga pose.  
 
 ---
 
