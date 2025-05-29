@@ -1,1 +1,1 @@
-### Yoga Pose Detection Pipeline Project
+### Yoga Pose Detection Model Project
