@@ -2,7 +2,7 @@
 
 ### Overview
 
-The objective of this project is to develop a graph-based yoga pose detection pipeline utilizing a **Graph Neural Network (GNN)** architecture. To achieve this, we propose integrating **GNN** layers to fine-tune a pre-trained **Transformer** model, leveraging a <CLS> token for accurate classification of graph-represented poses. Our approach follows the **Mesh-Graphormer** architecture by incorporating **Graph Residual Blocks** into the attention mechanism of a pre-trained Transformer, such as **BERT**. The model will process two inputs: an image of a yoga pose and s stick-figure-like graph representation of the pose (encoded as positional embeddings), the output will be a classification of the detected yoga pose.  
+The objective of this project is to develop a graph-based yoga pose detection pipeline utilizing a **Graph Neural Network (GNN)** architecture. To achieve this, we propose integrating **GNN** layers to fine-tune a pre-trained **Transformer** model, leveraging a **$<CLS>$** token for accurate classification of graph-represented poses. Our approach follows the **Mesh-Graphormer** architecture by incorporating **Graph Residual Blocks** into the attention mechanism of a pre-trained Transformer, such as **BERT**. The model will process two inputs: an image of a yoga pose and s stick-figure-like graph representation of the pose (encoded as positional embeddings), the output will be a classification of the detected yoga pose.  
 
 ---
 
@@ -57,20 +57,41 @@ A classification label $y \in \mathcal{Y} = \{y_1, y_2, \dots, y_K\}$ representi
 
 ---
 
-### Evaluation Metrics
+### Evaluation Metrics and Protocol
 
-- Since pose annotations (keypoints) are automatically generated using MediaPipe, we directly apply evaluation using $K$-fold cross-validation.
+To comprehensively evaluate the performance of our graph-based yoga pose classification model, we will adopt the following evaluation strategy and metrics:
+
+**Evaluation Protocol**
+
+We will use *stratified $K$-fold cross-validation* to assess the generalization of our model across the dataset.
+
+**Evaluation Metrics**
+
+To quantify model performance, we will use the following metrics:
+
+- *Accuracy*: Measured on both training and validation sets.
+
+- *Precision, Recall, F1-score (per class)*: Per class, to account for class imbalance.
+
+- *Confusion Matrix*: Shows which poses are misclassified.
+
+- *Top-k Accuracy*: For when the correct pose is among the top predictions.
+
+**Hyperparameter Tuning**
+
+To select optimal hyperparameters (learning rate, number of GNN layers, hidden size and dropout rate):
+
+We perform **grid search** over a predefined hyperparameter space.
+For each hyperparameter configuration, the average cross-validation score is computed. The configuration with the best validation performance is selected.
+
 ---
 
 ### Baselines
 
-We will evaluate our approach against some baselines:
+We will evaluate our approach against two Deep Learning baselines used in the following repository:
 
-**Mesh Graphormer**:
-[https://arxiv.org/abs/2104.03516](https://arxiv.org/pdf/2104.00272)
-
-**Yoga-Pose-Classification-and-Skeletonization**
+**Yoga-Pose-Classification-and-Skeletonization**:
 https://github.com/shub-garg/Yoga-Pose-Classification-and-Skeletonization
 
-
-
+- *YogaConvo2d (MediaPipe)*: Built using 2D convolutional neural networks.
+- *InceptionV3 (MediaPipe)*:  A transfer learning model that aids in object analysis and detection.
