@@ -1,8 +1,9 @@
 #import torch.nn as nn
-#import torch
+import torch
 #from torchvision import models
 import os
 import json
+import numpy as np
 
 
 def loadGraphs(dir):
@@ -15,26 +16,75 @@ def loadGraphs(dir):
                 with open(f"{n}\\{file}", 'r') as f:
                     data = json.load(f)['keypoints']
                     #print(len(data))
-     
-                    v=data.pop()
+                    if len(data)==0:
+                        f.close()
+                        print(f"{n}\\{file}")
+                        os.remove(f"{n}\\{file}")
+                        print(data)
+                        break
+                    else:
+                        e=data.pop()
+                        e = [[v[x]['start'],v[x]['end']] for x in range(len(v))]
+                        v = [[data[x]['x'],data[x]['y'],data[x]['z'],data[x]['visibility']] for x in range(len(data))]
+                        sd.append((v,e))
             d.append(sd)
+    return d
+
+def buildAdjMat(edges):
+    
+    nodes = sorted(set([node for edge in edges for node in edge]))
+
+   
+    nodeToIdx = {node: idx for idx, node in enumerate(nodes)}
+
+    
+    N = len(nodes)
+    adjMatrix = np.zeros((N, N), dtype=int)
+
+    
+    for edge in edges:
+        u, v = nodeToIdx[edge[0]], nodeToIdx[edge[1]]
+        adjMatrix[u][v] = 1
+        adjMatrix[v][u] = 1  
+
+    adj = adjMatrix.flatten()
+
+    return torch.tensor(adj)
+
+def concatCoor(verteces):
+
+    v = np.array(verteces)
+    #print(v.shape)
+    v= v.flatten()
+    #print(v.shape)
+
+    return torch.tensor(v)
+
+## takes matrix of tensors and matrix of tuples of matricies returns matrix of vectors
+
+def embPipeline(data,graphs):
+    embeddings=[]
+    for ind, elem in enumerate(data):
+        vt=graphs[ind][0]
+        ed=graphs[ind][1]
+        emb= torch.concat((elem,concatCoor(vt),buildAdjMat(ed)))
+        embeddings.append(emb)
+    return embeddings
 
 
-
-
-def embPipeline(data):
-    return
-
-
-def saveData(data):
-    return
+#def saveData(data):
+#    return
 
 
 
 
 
 def main():
-    loadGraphs("D:\dionigi\Documents\Python scripts\\aml2025Data\dataNorm")
+    #d=loadGraphs("D:\dionigi\Documents\Python scripts\\aml2025Data\dataNorm")[0]
+    #print(d[0][1])
+    #print(buildAdjMat(d[0][1]))
+    #print(concatCoor(d[0][0]))
     return
+    
 
-main()
+#main()
