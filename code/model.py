@@ -17,9 +17,6 @@ class model(nn.Module):
             nn.ReLU(),
         )
 
-        # GNN Block
-        self.gnn_block = GraphResidualBlock(in_channels=gnn_dim, out_channels=gnn_dim)
-
         # Transformer encoder 
         self.config = BertConfig.from_pretrained('bert-base-uncased')
         self.bert = BertModel.from_pretrained('bert-base-uncased')
@@ -30,8 +27,8 @@ class model(nn.Module):
         #for param in self.bert.parameters():
         #    param.requires_grad = False
 
-        
         self.classifier = nn.Linear(gnn_dim, num_classes)
+        
         return 
     
 
@@ -50,7 +47,10 @@ class model(nn.Module):
         embeddings=self.embed(embeddings)
 
         # bert pass
-        embeddings = self.bert(embeddings,...)
+        output = self.bert(...)
+
+
+
         #hidden_states = self.bert.embeddings(input_ids=0, token_type_ids=0)
         #for i, layer_module in enumerate(self.bert.encoder.layer):
         #    hidden_states = layer_module(hidden_states, attention_mask=None)[0]
