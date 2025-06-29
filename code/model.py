@@ -89,8 +89,8 @@ class model(nn.Module):
         return
     
 
-    
-class GraphResidualBlock(nn.Module):
+'''   
+class GraphResidualBlockOld(nn.Module):
     def __init__(self, in_channels, out_channels):
         super().__init__()
         self.conv1 = GCNConv(in_channels, out_channels)
@@ -103,7 +103,56 @@ class GraphResidualBlock(nn.Module):
         x = self.conv1(x, edge_index)
         x = self.relu(x)
         x = self.conv2(x, edge_index)
-        return x + residual
+        return x + residual'''
+
+class GraphResidualBlocK(nn.Module):
+    def __init__(self, in_channels, out_channels):
+        super().__init__()
+        hiddenDim= 0
+        # normLayer
+        self.norm1 = nn.LayerNorm(hiddenDim)
+        # mlp1 layer 
+        self.mlp1 = nn.Sequential(
+            nn.Linear(hiddenDim,hiddenDim),
+            nn.GELU())
+        # graph conv
+        self.conv1 = GCNConv(in_channels, out_channels)
+        #gelu
+        self.gelu1 = nn.GELU()
+        # graph conv
+        self.conv2 = GCNConv(in_channels, out_channels)
+        #gelu
+        self.gelu2 = nn.GELU()
+        # norm
+        self.norm2 = nn.LayerNorm(hiddenDim)
+        # mlp2
+        self.mlp2 = nn.Sequential(
+            nn.Linear(hiddenDim,hiddenDim),
+            nn.GELU())
+        # + residualmlp
+        self.mlp3 = nn.Sequential(
+            nn.Linear(hiddenDim,hiddenDim),
+            nn.GELU())
+
+
+
+    def forward(self,data):
+        res = self.mlp3(data)
+
+        x = self.norm1(data)
+        x= self.mlp1(x)
+        x= self.conv1(x)
+        x= self.gelu1(x)
+        x= self.conv2(x)
+        x = self.gelu2(x)
+        x = self.norm2(x)
+        x = self.mlp2(x)
+
+        x = res + x
+        
+        return x
+
+
 
 class BertGraphEncoder(BertLayer):
     def __init__(self, config):
