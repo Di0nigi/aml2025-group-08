@@ -10,19 +10,19 @@ class model(nn.Module):
     def __init__(self,backbone, hidden_dim=256, gnn_dim=128, num_classes=8):
         super(model, self).__init__()
         self.backBone = backbone # CNN feature extractor
-        inEmbed=0
-        outEmbed=0
+        
         self.embed = nn.Sequential(
-            nn.Linear(in_features=inEmbed, out_features=outEmbed),
+            nn.Linear(in_features=hidden_dim, out_features=gnn_dim),
             nn.ReLU(),
         )
 
-        # Transformer encoder 
+        # Transformer encoder, inject BERT layers
         self.config = BertConfig.from_pretrained('bert-base-uncased')
         self.bert = BertModel.from_pretrained('bert-base-uncased')
 
-        for i in range(4): ## da controllare
-            model.encoder.layer[i] = BertGraphEncoder(self.config)
+        self.bert.encoder.layer = nn.ModuleList([
+            BertGraphEncoder(self.config) for _ in range(self.config.num_hidden_layers)
+        ])
 
         #for param in self.bert.parameters():
         #    param.requires_grad = False
@@ -35,46 +35,24 @@ class model(nn.Module):
 
     def forward(self,data):
         im = data[0]
-        g = data[1] 
-        # Backbone pass
+        graph = data[1] 
 
+        # Backbone pass, extract CNN features
         extractedFeatures = self.backBone(im)
 
         # Embeddings computations
-
-        embeddings = embPipeline(extractedFeatures,g)
+        embeddings = embPipeline(extractedFeatures,graph)
         embeddings = torch.tensor(embeddings)
         embeddings=self.embed(embeddings)
 
-        # bert pass
-        output = self.bert(...)
+        # bert with injected GNN
+        output = self.bert(inputs_embeds=embeddings, attention_mask=None, edge_index=graph.edge_index)
 
+        # CLS loken for classification
+        cls_output = output.last_hidden_state[:, 0, :] 
+        logits = self.classifier(cls_output)
 
-
-        #hidden_states = self.bert.embeddings(input_ids=0, token_type_ids=0)
-        #for i, layer_module in enumerate(self.bert.encoder.layer):
-        #    hidden_states = layer_module(hidden_states, attention_mask=None)[0]
-        #    if i == 3:  # After 4th layer
-        #        hidden_states = self.relu(self.inject_layer(hidden_states))
-        
-        ''' # GNN pass (for each sample in the batch)
-        x_gnn = []
-        for i in range(B):
-            x = self.gnn_block(node_features[i], edge_index[i])
-            x_gnn.append(x)
-        x_gnn = torch.stack(x_gnn)  # B x N x gnn_dim
-
-        # token CLS (now all zeros)
-        cls_token = torch.zeros(B, 1, x_gnn.size(-1), device=x_gnn.device)
-        transformer_input = torch.cat([cls_token, x_gnn], dim=1)  # B x (1 + N) x D
-
-        # transformer pass
-        transformer_output = self.transformer(inputs_embeds=transformer_input)
-        cls_out = transformer_output.last_hidden_state[:, 0, :]  # B x D'''
-
-        # classification
-        #out = self.classifier(cls_out)  # B x num_classes
-        return #out
+        return logits
     
     def train(self):
         return
@@ -89,23 +67,9 @@ class model(nn.Module):
         return
     
 
-'''   
-class GraphResidualBlockOld(nn.Module):
-    def __init__(self, in_channels, out_channels):
-        super().__init__()
-        self.conv1 = GCNConv(in_channels, out_channels)
-        self.relu = nn.ReLU()
-        self.conv2 = GCNConv(out_channels, out_channels)
-        self.residual = nn.Linear(in_channels, out_channels)
 
-    def forward(self, x, edge_index):
-        residual = self.residual(x)
-        x = self.conv1(x, edge_index)
-        x = self.relu(x)
-        x = self.conv2(x, edge_index)
-        return x + residual'''
 
-class GraphResidualBlocK(nn.Module):
+class GraphResidualBlock(nn.Module):
     def __init__(self, in_channels, out_channels):
         super().__init__()
         hiddenDim= 0
@@ -135,15 +99,17 @@ class GraphResidualBlocK(nn.Module):
             nn.GELU())
 
 
-
-    def forward(self,data):
+    # def forward(self,data)
+    def forward(self,data, edge_index):
         res = self.mlp3(data)
 
         x = self.norm1(data)
         x= self.mlp1(x)
-        x= self.conv1(x)
+        #x= self.conv1(x)
+        x= self.conv1(x, edge_index)
         x= self.gelu1(x)
-        x= self.conv2(x)
+        #x= self.conv2(x)
+        x= self.conv2(x, edge_index)
         x = self.gelu2(x)
         x = self.norm2(x)
         x = self.mlp2(x)
@@ -157,20 +123,31 @@ class GraphResidualBlocK(nn.Module):
 class BertGraphEncoder(BertLayer):
     def __init__(self, config):
         super().__init__(config)
-
-        self.gNN = GraphResidualBlock(0,0)
+        self.gNN = GraphResidualBlock(config.hidden_size)
 
         for name, param in self.named_parameters():
             if not name.startswith("gNN"):
                 param.requires_grad = False
 
-    def forward(self, hidden_states, attention_mask=None, **kwargs):
+    # edge index da controllare 
+    def forward(self, hidden_states, attention_mask=None, head_mask=None,
+                encoder_hidden_states=None, encoder_attention_mask=None,
+                past_key_value=None, output_attentions=False, edge_index=None):
         
-        self_attention_outputs = self.attention(hidden_states, attention_mask, **kwargs)
-        attention_output = self_attention_outputs[0]
+        self_attention_outputs = self.attention(hidden_states, attention_mask, head_mask, output_attentions, past_key_value,)
+        
+
+        attention_output = self_attention_outputs[0] # [B, L, D] output tensor after attention
+
+        # GNN needs num_nodes, D
+        B, L, D = attention_output.shape
+        gnn_input = attention_output.reshape(B * L, D)
+        gnn_output = self.gnn(gnn_input, edge_index)
        
         attention_output = self.gNN(attention_output)
+        attention_output = gnn_output.view(B, L, D) # reshape for the rest of the pipeline
 
+        # Apply the intermediate and output layers
         intermediate_output = self.intermediate(attention_output)
         layer_output = self.output(intermediate_output, attention_output)
 
