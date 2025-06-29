@@ -54,7 +54,34 @@ class model(nn.Module):
 
         return logits
     
-    def train(self):
+    def train(self,dataLoaders,epochs=10):
+
+        trainIm=dataLoaders[0][0]
+        trainVe=dataLoaders[0][1]
+        trainEd= dataLoaders[0][2]
+
+        
+        testIm=dataLoaders[1][0]
+        testVe=dataLoaders[1][1]
+        testEd= dataLoaders[1][2]
+
+        # train loop
+
+        for epoch in range(epochs):
+            for batch1,batch2,batch3 in zip(trainIm,trainVe,trainEd):
+                im,t = batch1
+                v,_=batch2
+                e,_ = batch3
+                graph=(v,e)
+                self.forward([im,graph])
+
+        # test loop
+
+        for epoch in range(epochs):
+            for batch1,batch2,batch3 in zip(testIm,testVe,testEd):
+                pass
+
+
         return
     
     def predict(self):
@@ -156,6 +183,7 @@ class BertGraphEncoder(BertLayer):
 
     
 def main():
+
     resnet = resnet50(weights=ResNet50_Weights.DEFAULT)
     modules = list(resnet.children())[:-1]
     featureExtractor = nn.Sequential(*modules)

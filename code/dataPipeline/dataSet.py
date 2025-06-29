@@ -7,6 +7,12 @@ import matplotlib.pyplot as plt
 import mediapipe as mp
 import cv2
 import json
+import embeddingUtils as eu
+import torch.nn.functional as F
+from torch.utils.data import DataLoader, Dataset,TensorDataset, Subset
+
+from torchvision import transforms
+
 
 def loadData(path):
     r = os.listdir(path)
@@ -154,18 +160,19 @@ def normDataset(data,targetShape=(500,500,3)):
 def saveData(lis,lis2,directory):
     d=os.listdir(directory)
     
-    #print(d)
+    print(d)
     for dir in range(len(lis)):
         if str(dir) not in d:
             os.mkdir(os.path.join(directory,str(dir)))
         for n,im in enumerate(lis[dir]):
             #print(im.shape)
             pic=Image.fromarray(im)
-            pic.save(f"{os.path.join(directory,str(dir))}\\{dir}_{n}.png")
+            pic.save(f"{os.path.join(directory,str(dir))}\\{n}.png")
     for dir in range(len(lis2)):
         if str(dir)+"_lnd" not in d:
             os.mkdir(os.path.join(directory,str(dir)+"_lnd"))
         for n,im in enumerate(lis2[dir]):
+            print("eo")
             with open(f"{directory}\{dir}_lnd\{n}_lnd.json", 'w') as f:
                 json.dump({"keypoints": lis2[dir][n]}, f, indent=2)
             
@@ -224,34 +231,102 @@ def getLandMarks(image):
     plt.axis('off')
     plt.show()'''
 
+def openImages(listOfImages):
+    out = []
+    for elem in listOfImages:
+        out.append(Image.open(elem))
+    return out
+
+def oneHot(n,max):
+    index = torch.tensor([n])
+    out = F.one_hot(index, num_classes=max)
+    return out
+toTensor = transforms.ToTensor()
+
+import torch
+
+def shuffleTensorList(tensorList):
+    
+    
+    permutation = torch.randperm(tensorList[0].size(0))
+
+ 
+    return [tensor[permutation] for tensor in tensorList]
+
+
+
+def splitDataset(dataset, trainRatio=0.8):
+    
+    totalLen = len(dataset)
+    trainLen = int(totalLen * trainRatio)
+    testLen = totalLen - trainLen
+
+    indices = list(range(totalLen))
+    trainIndices = indices[:trainLen]
+    testIndices = indices[trainLen:]
+
+    trainSet = Subset(dataset, trainIndices)
+    testSet = Subset(dataset, testIndices)
+
+    return trainSet, testSet
+
+def getLoaders(datasets,batch):
+    out=[]
+    for dataset in datasets:
+        out.append(DataLoader(dataset,batch_size=batch,shuffle=False))
+    return out
+
+# gets the data path split and batches returns dataloaders
+
+def dataPipeline(path,split,batches=1,classes=12):
+    files = loadData(path)[::2]
+    images = [openImages(l) for l in files]
+    graphs = eu.loadGraphs(path)
+    imageData=[]
+    vertexData=[]
+    edgeData=[]
+    targets=[]
+    for pose in range(len(files)):
+        for elem in range(len(images[pose])):
+            im = images[pose][elem] 
+            im = toTensor(im)
+            print(im.shape)
+            imageData.append(im)
+            #print(elem)
+            vertexData.append(graphs[pose][elem][0])
+            edgeData.append(graphs[pose][elem][1])
+            #im = transforms.ToTensor(im)
+            #dataElem = torch.tensor([im,graphs[pose][elem]]) # image and tuple of matricies
+            target = oneHot(pose,max=classes)
+            #.append(dataElem)
+            targets.append(target)
+    #print(len(data))
+    imageData=torch.stack(imageData)
+    vertexData=torch.stack(vertexData)
+    edgeData=torch.stack(edgeData)
+    labels=torch.stack(targets)
+    imageData,vertexData,edgeData,labels = shuffleTensorList([imageData,vertexData,edgeData,labels])
+
+    imageDataSetTrain, imageDataSetTest =splitDataset(TensorDataset(imageData,labels), trainRatio=split)
+    vertexDataSetTrain, vertexDataSetTest = splitDataset(TensorDataset(vertexData,labels),trainRatio=split)
+    edgeDataSetTrain, edgeDataSetTest = splitDataset(TensorDataset(edgeData,labels),trainRatio=split)
+
+    trainLoaders = getLoaders([imageDataSetTrain,vertexDataSetTrain,edgeDataSetTrain],batch=batches)
+
+    testLoaders = getLoaders([imageDataSetTest,vertexDataSetTest,edgeDataSetTest],batch=batches)
+
+    return trainLoaders,testLoaders
+
 
 #print(loadData("D:\dionigi\Documents\Python scripts\\aml2025Data\data"))
 def main ():
-    files=loadData("D:\dionigi\Documents\Python scripts\\aml2025Data\data")
-    data=normDataset(files)
-   # l=[]
-    #for elem in data[1][10:20]:
-   # v,e= getLandMarks(data[0][50])
-      # l.append(v)
-    #print(v)
-    saveData(data[0],data[1],"D:\dionigi\Documents\Python scripts\\aml2025Data\dataNorm")
+    #files=loadData("D:\dionigi\Documents\Python scripts\\aml2025Data\data")
+    dataPipeline("D:\dionigi\Documents\Python scripts\\aml2025Data\dataNorm",split=0.8)
+    #data=normDataset([files[0]])
 
-    #dims=countDims(files)
-    #plotDims(dims)
-    #print(max(dims))
-    #print(min(dims))
-
-   # rgb_img = np.random.randint(0, 255, (1000, 1000, 3), dtype=np.uint8)
-    #show_image(rgb_img, title="Random RGB Image")
-
-    #f=applyCrop(rgb_img,0,200)
-
-    #f1=applyCrop(f,1,200)
-
-    #show_image(f1, title="Random RGB Image")
-    #print(f1.shape)
+    #saveData(data[0],data[1],"D:\dionigi\Documents\Python scripts\\aml2025Data\dataNorm")
     
 
-    return
+    return "done"
 
-#main()
+print(main())

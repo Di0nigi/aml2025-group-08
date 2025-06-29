@@ -20,17 +20,20 @@ def loadGraphs(dir):
                         f.close()
                         print(f"{n}\\{file}")
                         os.remove(f"{n}\\{file}")
-                        print(data)
+                        print(f"{n[:-4]}\\{file[:-9]}.png")
+                        os.remove(f"{n[:-4]}\\{file[:-9]}.png")
+                        #print(data)
                         break
                     else:
                         e=data.pop()
-                        e = [[v[x]['start'],v[x]['end']] for x in range(len(v))]
+                        e = [[e[x]['start'],e[x]['end']] for x in range(len(e))]
                         v = [[data[x]['x'],data[x]['y'],data[x]['z'],data[x]['visibility']] for x in range(len(data))]
-                        sd.append((v,e))
+                        sd.append((torch.tensor(v),torch.tensor(e)))
             d.append(sd)
     return d
 
 def buildAdjMat(edges):
+    #[[2,3],[3,4],[5,6]]
     
     nodes = sorted(set([node for edge in edges for node in edge]))
 
@@ -80,11 +83,11 @@ def embPipeline(data,graphs):
 
 
 def main():
-    #d=loadGraphs("D:\dionigi\Documents\Python scripts\\aml2025Data\dataNorm")[0]
+    d=loadGraphs("D:\dionigi\Documents\Python scripts\\aml2025Data\dataNorm")
     #print(d[0][1])
     #print(buildAdjMat(d[0][1]))
     #print(concatCoor(d[0][0]))
     return
     
 
-#main()
+main()
