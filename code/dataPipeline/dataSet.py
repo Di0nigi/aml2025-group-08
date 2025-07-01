@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import mediapipe as mp
 import cv2
 import json
-import embeddingUtils as eu
+import dataPipeline.embeddingUtils as eu
 import torch.nn.functional as F
 from torch.utils.data import DataLoader, Dataset,TensorDataset, Subset
 
@@ -321,7 +321,7 @@ def dataPipeline(path,split,batches=1,classes=12):
 #print(loadData("D:\dionigi\Documents\Python scripts\\aml2025Data\data"))
 def main ():
     #files=loadData("D:\dionigi\Documents\Python scripts\\aml2025Data\data")
-    dataPipeline("D:\dionigi\Documents\Python scripts\\aml2025Data\dataNorm",split=0.8)
+    #dataPipeline("D:\dionigi\Documents\Python scripts\\aml2025Data\dataNorm",split=0.8)
     #data=normDataset([files[0]])
 
     #saveData(data[0],data[1],"D:\dionigi\Documents\Python scripts\\aml2025Data\dataNorm")
@@ -329,4 +329,5 @@ def main ():
 
     return "done"
 
-print(main())
+if __name__ == "__main__":   
+    print(main())

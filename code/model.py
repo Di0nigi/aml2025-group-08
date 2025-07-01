@@ -3,14 +3,15 @@ import torch
 from torchvision.models import resnet50, ResNet50_Weights 
 from transformers import BertTokenizer, BertModel, BertConfig
 from dataPipeline.embeddingUtils import embPipeline
+from dataPipeline.dataSet import dataPipeline
 from torch_geometric.nn import GCNConv
 from transformers.models.bert.modeling_bert import BertLayer
 
 class model(nn.Module):
-    def __init__(self,backbone, hidden_dim=256, gnn_dim=128, num_classes=8):
+    def __init__(self,backbone,hidden_dim=2048, gnn_dim=128, num_classes=12):
         super(model, self).__init__()
-        self.backBone = backbone # CNN feature extractor
-        
+        self.backBone = backbone
+
         self.embed = nn.Sequential(
             nn.Linear(in_features=hidden_dim, out_features=gnn_dim),
             nn.ReLU(),
@@ -20,8 +21,11 @@ class model(nn.Module):
         self.config = BertConfig.from_pretrained('bert-base-uncased')
         self.bert = BertModel.from_pretrained('bert-base-uncased')
 
+        self.inChannels=self.config.hidden_size
+        self.outChannels=self.config.hidden_size
+
         self.bert.encoder.layer = nn.ModuleList([
-            BertGraphEncoder(self.config) for _ in range(self.config.num_hidden_layers)
+            BertGraphEncoder(self.config,self.inChannels,self.outChannels) for _ in range(self.config.num_hidden_layers)
         ])
 
         #for param in self.bert.parameters():
@@ -35,7 +39,9 @@ class model(nn.Module):
 
     def forward(self,data):
         im = data[0]
-        graph = data[1] 
+
+        graph = data[1]
+        edges = data[1][1] 
 
         # Backbone pass, extract CNN features
         extractedFeatures = self.backBone(im)
@@ -46,15 +52,18 @@ class model(nn.Module):
         embeddings=self.embed(embeddings)
 
         # bert with injected GNN
-        output = self.bert(inputs_embeds=embeddings, attention_mask=None, edge_index=graph.edge_index)
+        output = self.bert(inputs_embeds=embeddings, attention_mask=None, edge_index=edges)
 
-        # CLS loken for classification
+        # CLS token
         cls_output = output.last_hidden_state[:, 0, :] 
         logits = self.classifier(cls_output)
 
         return logits
     
-    def train(self,dataLoaders,epochs=10):
+    def train(self,dataLoaders,lossFunc, optimizer ,epochs=10):
+
+        self.loss =lossFunc
+        self.optim =optimizer
 
         trainIm=dataLoaders[0][0]
         trainVe=dataLoaders[0][1]
@@ -66,6 +75,7 @@ class model(nn.Module):
         testEd= dataLoaders[1][2]
 
         # train loop
+        self.train()
 
         for epoch in range(epochs):
             for batch1,batch2,batch3 in zip(trainIm,trainVe,trainEd):
@@ -73,9 +83,14 @@ class model(nn.Module):
                 v,_=batch2
                 e,_ = batch3
                 graph=(v,e)
-                self.forward([im,graph])
+                y = self.forward([im,graph])
+                loss = self.loss(y,t)
+                self.optim.zero_grad()
+                loss.backward()
+                self.optim.step()
 
         # test loop
+        self.eval()
 
         for epoch in range(epochs):
             for batch1,batch2,batch3 in zip(testIm,testVe,testEd):
@@ -97,9 +112,9 @@ class model(nn.Module):
 
 
 class GraphResidualBlock(nn.Module):
-    def __init__(self, in_channels, out_channels):
+    def __init__(self, in_channels, out_channels, hiddenDim):
         super().__init__()
-        hiddenDim= 0
+        ùhiddenDim= 0
         # normLayer
         self.norm1 = nn.LayerNorm(hiddenDim)
         # mlp1 layer 
@@ -126,7 +141,7 @@ class GraphResidualBlock(nn.Module):
             nn.GELU())
 
 
-    # def forward(self,data)
+ 
     def forward(self,data, edge_index):
         res = self.mlp3(data)
 
@@ -148,15 +163,14 @@ class GraphResidualBlock(nn.Module):
 
 
 class BertGraphEncoder(BertLayer):
-    def __init__(self, config):
+    def __init__(self, config,inChannels,outChannels):
         super().__init__(config)
-        self.gNN = GraphResidualBlock(config.hidden_size)
+        self.gNN = GraphResidualBlock(in_channels=inChannels,out_channels=outChannels,hiddenDim=config.hidden_size)
 
         for name, param in self.named_parameters():
             if not name.startswith("gNN"):
                 param.requires_grad = False
 
-    # edge index da controllare 
     def forward(self, hidden_states, attention_mask=None, head_mask=None,
                 encoder_hidden_states=None, encoder_attention_mask=None,
                 past_key_value=None, output_attentions=False, edge_index=None):
@@ -169,9 +183,9 @@ class BertGraphEncoder(BertLayer):
         # GNN needs num_nodes, D
         B, L, D = attention_output.shape
         gnn_input = attention_output.reshape(B * L, D)
-        gnn_output = self.gnn(gnn_input, edge_index)
+        gnn_output = self.gNN(gnn_input, edge_index)
        
-        attention_output = self.gNN(attention_output)
+        attention_output = self.gNN(attention_output,edge_index)
         attention_output = gnn_output.view(B, L, D) # reshape for the rest of the pipeline
 
         # Apply the intermediate and output layers
@@ -184,10 +198,33 @@ class BertGraphEncoder(BertLayer):
     
 def main():
 
+    data = dataPipeline("D:\dionigi\Documents\Python scripts\\aml2025Data\dataNorm",split=0.8,batches=1,classes=12)
+
+    # Right now data has image data have 500x500 dimensions, 224x224 needed
+
     resnet = resnet50(weights=ResNet50_Weights.DEFAULT)
     modules = list(resnet.children())[:-1]
     featureExtractor = nn.Sequential(*modules)
+    # Input shape: torch.Size([1, 3, 224, 224])
+    # Output shape: torch.Size([1, 2048, 1, 1])
+
+    '''
+    dummy_input = torch.randn(1, 3, 224, 224)
+
+    # Forward pass
+    with torch.no_grad():
+        output = featureExtractor(dummy_input)
+
+    print("Output shape:", output.shape)'''
 
     mT=model(backbone=featureExtractor)
 
-    return
+    lossFunction = torch.nn.L1Loss()
+    optimizer = torch.optim.AdamW(mT.parameters(), lr=1e-4, weight_decay=1e-5)
+
+    mT.train(dataLoaders=data,lossFunc=lossFunction,optimizer=optimizer,epochs=1)
+
+    return "done"
+
+if __name__ == "__main__":   
+    print(main())

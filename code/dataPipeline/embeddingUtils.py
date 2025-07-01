@@ -88,6 +88,6 @@ def main():
     #print(buildAdjMat(d[0][1]))
     #print(concatCoor(d[0][0]))
     return
-    
 
-main()
+if __name__ == "__main__":   
+    main()
