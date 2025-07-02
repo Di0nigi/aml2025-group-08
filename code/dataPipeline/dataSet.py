@@ -290,7 +290,7 @@ def dataPipeline(path,split,batches=1,classes=12):
         for elem in range(len(images[pose])):
             im = images[pose][elem] 
             im = toTensor(im)
-            print(im.shape)
+            #print(im.shape)
             imageData.append(im)
             #print(elem)
             vertexData.append(graphs[pose][elem][0])

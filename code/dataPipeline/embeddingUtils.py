@@ -38,7 +38,7 @@ def buildAdjMat(edges):
     nodes = sorted(set([node for edge in edges for node in edge]))
 
    
-    nodeToIdx = {node: idx for idx, node in enumerate(nodes)}
+    nodeToIdx = {node.item(): idx for idx, node in enumerate(nodes)}
 
     
     N = len(nodes)
@@ -46,7 +46,7 @@ def buildAdjMat(edges):
 
     
     for edge in edges:
-        u, v = nodeToIdx[edge[0]], nodeToIdx[edge[1]]
+        u, v = nodeToIdx[edge[0].item()], nodeToIdx[edge[1].item()]
         adjMatrix[u][v] = 1
         adjMatrix[v][u] = 1  
 
@@ -68,9 +68,14 @@ def concatCoor(verteces):
 def embPipeline(data,graphs):
     embeddings=[]
     for ind, elem in enumerate(data):
-        vt=graphs[ind][0]
-        ed=graphs[ind][1]
+        vt=graphs[0][ind]
+        ed=graphs[1][ind]
+        elem=elem.squeeze()
+       # print(elem.shape)
+       # print(concatCoor(vt).shape)
+       # print(buildAdjMat(ed).shape)
         emb= torch.concat((elem,concatCoor(vt),buildAdjMat(ed)))
+        #print(emb.shape)
         embeddings.append(emb)
     return embeddings
 
