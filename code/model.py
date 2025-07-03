@@ -59,14 +59,15 @@ class model(nn.Module):
 
         #output = self.bert(inputs_embeds=embeddings, attention_mask=None, edge_index=edges)
 
-        output = embeddings.unsqueeze(0)#.permute(0,2,1)   
+        #output = embeddings.unsqueeze(0)#.permute(0,2,1)   
+        output = embeddings
         # Pass through each transformer layer, injecting edge_index into each
         for layer_module in self.bert.encoder.layer:
             layer_outputs = layer_module(hidden_states=output, edge_index=edges)
             output = layer_outputs[0]  
 
         # CLS token
-        cls_output = output.last_hidden_state[:, 0, :] 
+        cls_output = output[:, 0, :]
         logits = self.classifier(cls_output)
 
         return logits
@@ -87,6 +88,7 @@ class model(nn.Module):
 
         # train loop
         self.train()
+        totalLoss= 0.0
 
         for epoch in range(epochs):
             for batch1,batch2,batch3 in zip(trainIm,trainVe,trainEd):
@@ -95,18 +97,54 @@ class model(nn.Module):
                 e,_ = batch3
                 graph=(v,e)
                 y = self.forward([im,graph])
+                t = t.view_as(y)
+                #print(f"shape t {y.shape}") 
+                #print(f"shape t {t.shape}") 
                 loss = self.loss(y,t)
                 self.optim.zero_grad()
                 loss.backward()
                 self.optim.step()
-                print(loss.item())
+                #print(loss.item())
+                totalLoss += loss.item()
+                print(f"Train loss: {loss.item():.4f}")
+
+        print(f"Epoch [{epoch+1}/{epochs}] Total Training Loss: {totalLoss:.4f}")
 
         # test loop
         self.eval()
 
+        totalEvalLoss = 0.0
+        correct = 0
+        total = 0
+
         for epoch in range(epochs):
             for batch1,batch2,batch3 in zip(testIm,testVe,testEd):
-                pass
+
+                im, t = batch1
+                v, _ = batch2
+                e, _ = batch3
+
+                graph = (v, e)
+
+                y = self.forward([im, graph])
+                t = t.view_as(y) 
+                loss = self.loss(y, t)
+                totalEvalLoss += loss.item()
+
+                # Classification: accuracy
+
+                if y.dim() > 1:
+                    preds = y.argmax(dim=1)
+                else:
+                    preds = (y > 0.5).long()  # binary
+
+                correct += (preds == t).sum().item()
+                total += t.numel()
+
+        avgEvalLoss = totalEvalLoss / max(len(testIm), 1)
+        accuracy = correct / max(total, 1)
+
+        print(f"Epoch [{epoch+1}/{epochs}] Eval Loss: {avgEvalLoss:.4f}, Accuracy: {accuracy*100:.2f}%\n")
 
 
         return
@@ -190,9 +228,10 @@ class BertGraphEncoder(BertLayer):
     def forward(self, hidden_states, attention_mask=None, head_mask=None,
                 encoder_hidden_states=None, encoder_attention_mask=None,
                 past_key_value=None, output_attentions=False, edge_index=None):
-        
-        print(hidden_states.shape)
+        #print("hiddenst")
+        #print(hidden_states.shape)
         edges= edge_index.squeeze().permute(1,0)
+        #print(getMaxIndex(edges))
         #print(edges)
         #if hidden_states.is_bool():
         #hidden_states = hidden_states.float()
@@ -201,24 +240,32 @@ class BertGraphEncoder(BertLayer):
         
 
         attention_output = self_attention_outputs[0] # [B, L, D] output tensor after attention
-        print("eo")
+        #print("eo")
         #print(attention_output.shape)
         # GNN needs num_nodes, D
         B, L, D = attention_output.shape
         gnn_input = attention_output.reshape(B * L, D)
-        print(gnn_input.shape)
+        #gnn_input = torch.stack([gnn_input for x in range(33)])
+        #gnn_input=gnn_input.permute(1,0,2)
+        #print(gnn_input.shape)
         gnn_output = self.gNN(gnn_input, edges)
 
-        print(gnn_output.shape)
+        #print("e")
        
         #attention_output = self.gNN(attention_output,edge_index)
         gnn_output = gnn_output.view(B, L, D) # reshape for the rest of the pipeline
+        #print(gnn_output.shape)
 
         # Apply the intermediate and output layers
         intermediate_output = self.intermediate(gnn_output)
         layer_output = self.output(intermediate_output, gnn_output)
 
         return (layer_output,)
+    
+
+
+
+
     
 
     

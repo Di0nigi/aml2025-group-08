@@ -74,7 +74,12 @@ def embPipeline(data,graphs):
        # print(elem.shape)
        # print(concatCoor(vt).shape)
        # print(buildAdjMat(ed).shape)
+        #mI=getMaxIndex(ed.squeeze().permute(1,0))
+        #print(mI)
+        mI= 32 # should be consistent across 
         emb= torch.concat((elem,concatCoor(vt),buildAdjMat(ed)))
+        emb = torch.stack([emb for x in range(mI+1)])
+       #print("shape")
         #print(emb.shape)
         embeddings.append(emb)
     return embeddings
@@ -83,6 +88,11 @@ def embPipeline(data,graphs):
 #def saveData(data):
 #    return
 
+def getMaxIndex(edge_index: torch.Tensor):
+    if edge_index.ndim != 2 or edge_index.shape[0] != 2:
+        raise ValueError(f"Invalid edge_index shape: {edge_index.shape}, expected [2, num_edges]")
+    
+    return int(edge_index.max().item())
 
 
 
