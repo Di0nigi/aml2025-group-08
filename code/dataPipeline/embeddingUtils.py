@@ -98,7 +98,7 @@ def getMaxIndex(edge_index: torch.Tensor):
 
 
 def main():
-    d=loadGraphs("D:\dionigi\Documents\Python scripts\\aml2025Data\dataNorm")
+    #d=loadGraphs("D:\dionigi\Documents\Python scripts\\aml2025Data\dataNorm")
     #print(d[0][1])
     #print(buildAdjMat(d[0][1]))
     #print(concatCoor(d[0][0]))

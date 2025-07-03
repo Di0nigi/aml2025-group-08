@@ -4,7 +4,8 @@ from torchvision.models import resnet50, ResNet50_Weights
 from transformers import BertTokenizer, BertModel, BertConfig
 from dataPipeline.embeddingUtils import embPipeline
 from dataPipeline.dataSet import dataPipeline
-from torch_geometric.nn import GCNConv
+from torch_geometric.nn import GCNConv 
+from torch_geometric.data import Data,Batch
 from transformers.models.bert.modeling_bert import BertLayer
 
 class model(nn.Module):
@@ -134,11 +135,8 @@ class model(nn.Module):
 
                     # Classification: accuracy
 
-                    if y.dim() > 1:
-                        preds = y.argmax(dim=1)
-                    else:
-                        preds = (y > 0.5).long()  
-
+                    preds = y.argmax(dim=1)
+                    
                     correct += (preds == t).sum().item()
                     total += t.numel()
 
@@ -212,11 +210,6 @@ class GraphResidualBlock(nn.Module):
         return x
 
 
-
-
-
-
-
 class BertGraphEncoder(BertLayer):
     def __init__(self, config,inChannels,outChannels):
         super().__init__(config)
@@ -231,11 +224,14 @@ class BertGraphEncoder(BertLayer):
                 past_key_value=None, output_attentions=False, edge_index=None):
         #print("hiddenst")
         #print(hidden_states.shape)
-        edges= edge_index.squeeze().permute(1,0)
+        #print(edge_index.shape)
+        #edges= edge_index.squeeze().permute(1,0)
         #print(getMaxIndex(edges))
         #print(edges)
         #if hidden_states.is_bool():
         #hidden_states = hidden_states.float()
+
+
         
         self_attention_outputs = self.attention(hidden_states)
         
@@ -245,11 +241,12 @@ class BertGraphEncoder(BertLayer):
         #print(attention_output.shape)
         # GNN needs num_nodes, D
         B, L, D = attention_output.shape
-        gnn_input = attention_output.reshape(B * L, D)
-        #gnn_input = torch.stack([gnn_input for x in range(33)])
-        #gnn_input=gnn_input.permute(1,0,2)
-        #print(gnn_input.shape)
-        gnn_output = self.gNN(gnn_input, edges)
+
+        graphBatched = Batch.from_data_list([Data(x=attention_output[i], edge_index=edge_index[i].t().contiguous()) for i in range(edge_index.size(0))])
+
+        #gnn_input = attention_output.reshape(B * L, D)
+        
+        gnn_output = self.gNN(graphBatched.x, graphBatched.edge_index)
 
         #print("e")
        
@@ -273,7 +270,7 @@ class BertGraphEncoder(BertLayer):
 def main():
 
     data = dataPipeline("D:\dionigi\Documents\Python scripts\\aml2025Data\dataNorm",split=0.8,batches=1,classes=12)
-    #for elem,_ in data[0][0]:
+    #    for elem,_ in data[0][0]:
     #    x= elem
   
 
@@ -284,9 +281,6 @@ def main():
     # Input shape: whatever
     # Output shape: torch.Size([1, 2048, 1, 1])
 
-    
-
-    
     '''dummy_input = torch.randn(1, 3, 1000, 1000)
 
     # Forward pass
@@ -300,7 +294,7 @@ def main():
     lossFunction = torch.nn.L1Loss()
     optimizer = torch.optim.AdamW(mT.parameters(), lr=1e-4, weight_decay=1e-5)
 
-    mT.trainL(dataLoaders=data,lossFunc=lossFunction,optimizer=optimizer,epochs=10)
+    mT.trainL(dataLoaders=data,lossFunc=lossFunction,optimizer=optimizer,epochs=5)
 
     return "done"
 
