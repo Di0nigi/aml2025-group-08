@@ -87,10 +87,11 @@ class model(nn.Module):
         testEd= dataLoaders[1][2]
 
         # train loop
-        self.train()
-        totalLoss= 0.0
+        
 
         for epoch in range(epochs):
+            self.train()
+            totalLoss= 0.0
             for batch1,batch2,batch3 in zip(trainIm,trainVe,trainEd):
                 im,t = batch1
                 v,_=batch2
@@ -106,45 +107,45 @@ class model(nn.Module):
                 self.optim.step()
                 #print(loss.item())
                 totalLoss += loss.item()
-                print(f"Train loss: {loss.item():.4f}")
+                #print(f"Train loss: {loss.item():.4f}")
 
-        print(f"Epoch [{epoch+1}/{epochs}] Total Training Loss: {totalLoss:.4f}")
+            print(f"Epoch [{epoch+1}/{epochs}] Total Training Loss: {totalLoss:.4f}")
 
-        # test loop
-        self.eval()
+            # test loop
+            self.eval()
 
-        totalEvalLoss = 0.0
-        correct = 0
-        total = 0
+            totalEvalLoss = 0.0
+            correct = 0
+            total = 0
 
-        for epoch in range(epochs):
-            for batch1,batch2,batch3 in zip(testIm,testVe,testEd):
+            with torch.no_grad():
+                for batch1,batch2,batch3 in zip(testIm,testVe,testEd):
 
-                im, t = batch1
-                v, _ = batch2
-                e, _ = batch3
+                    im, t = batch1
+                    v, _ = batch2
+                    e, _ = batch3
 
-                graph = (v, e)
+                    graph = (v, e)
 
-                y = self.forward([im, graph])
-                t = t.view_as(y) 
-                loss = self.loss(y, t)
-                totalEvalLoss += loss.item()
+                    y = self.forward([im, graph])
+                    t = t.view_as(y) 
+                    loss = self.loss(y, t)
+                    totalEvalLoss += loss.item()
 
-                # Classification: accuracy
+                    # Classification: accuracy
 
-                if y.dim() > 1:
-                    preds = y.argmax(dim=1)
-                else:
-                    preds = (y > 0.5).long()  # binary
+                    if y.dim() > 1:
+                        preds = y.argmax(dim=1)
+                    else:
+                        preds = (y > 0.5).long()  
 
-                correct += (preds == t).sum().item()
-                total += t.numel()
+                    correct += (preds == t).sum().item()
+                    total += t.numel()
 
-        avgEvalLoss = totalEvalLoss / max(len(testIm), 1)
-        accuracy = correct / max(total, 1)
+            avgEvalLoss = totalEvalLoss / max(len(testIm), 1)
+            accuracy = correct / max(total, 1)
 
-        print(f"Epoch [{epoch+1}/{epochs}] Eval Loss: {avgEvalLoss:.4f}, Accuracy: {accuracy*100:.2f}%\n")
+            print(f"Epoch [{epoch+1}/{epochs}] Eval Loss: {avgEvalLoss:.4f}, Accuracy: {accuracy*100:.2f}%\n")
 
 
         return
@@ -299,7 +300,7 @@ def main():
     lossFunction = torch.nn.L1Loss()
     optimizer = torch.optim.AdamW(mT.parameters(), lr=1e-4, weight_decay=1e-5)
 
-    mT.trainL(dataLoaders=data,lossFunc=lossFunction,optimizer=optimizer,epochs=1)
+    mT.trainL(dataLoaders=data,lossFunc=lossFunction,optimizer=optimizer,epochs=10)
 
     return "done"
 
