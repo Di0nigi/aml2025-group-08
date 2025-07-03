@@ -1,5 +1,6 @@
 import torch.nn as nn
 import torch
+import dataPipeline.evaluationUtils as ev
 from torchvision.models import resnet50, ResNet50_Weights 
 from transformers import BertTokenizer, BertModel, BertConfig
 from dataPipeline.embeddingUtils import embPipeline
@@ -11,6 +12,8 @@ from transformers.models.bert.modeling_bert import BertLayer
 class model(nn.Module):
     def __init__(self,backbone, dimEmbeddings=7080, gnn_dim=768, num_classes=12):
         super(model, self).__init__()
+        self.loaded=False
+        
         self.backBone = backbone
 
         #dimEmbeddings = 7080
@@ -38,8 +41,6 @@ class model(nn.Module):
         
         return 
     
-
-
     def forward(self,data):
         im = data[0]
 
@@ -87,12 +88,17 @@ class model(nn.Module):
         testVe=dataLoaders[1][1]
         testEd= dataLoaders[1][2]
 
+        trainLossList, trainAccList = [], []
+        valLossList, valAccList = [], []
+
         # train loop
         
-
         for epoch in range(epochs):
+            print(f"Epoch [{epoch+1}/{epochs}]")
             self.train()
             totalLoss= 0.0
+            correctT = 0
+            totalT = 0
             for batch1,batch2,batch3 in zip(trainIm,trainVe,trainEd):
                 im,t = batch1
                 v,_=batch2
@@ -110,7 +116,16 @@ class model(nn.Module):
                 totalLoss += loss.item()
                 #print(f"Train loss: {loss.item():.4f}")
 
-            print(f"Epoch [{epoch+1}/{epochs}] Total Training Loss: {totalLoss:.4f}")
+                preds = y.argmax(dim=1)
+                correctT += (preds == t).sum().item()
+                totalT += t.numel()
+            trainAccuracy = correctT / max(totalT, 1)
+            totalLoss= totalLoss/totalT
+            trainLossList.append(totalLoss)
+            trainAccList.append(trainAccuracy)
+
+
+            print(f"Train Loss: {totalLoss:.4f}, Train Accuracy: {trainAccuracy*100:.4f}%")
 
             # test loop
             self.eval()
@@ -118,6 +133,8 @@ class model(nn.Module):
             totalEvalLoss = 0.0
             correct = 0
             total = 0
+            targetList=[]
+            predList=[]
 
             with torch.no_grad():
                 for batch1,batch2,batch3 in zip(testIm,testVe,testEd):
@@ -134,7 +151,9 @@ class model(nn.Module):
                     totalEvalLoss += loss.item()
 
                     # Classification: accuracy
-
+                    predList.append(y)
+                    targetList.append(t)
+                    
                     preds = y.argmax(dim=1)
                     
                     correct += (preds == t).sum().item()
@@ -142,24 +161,26 @@ class model(nn.Module):
 
             avgEvalLoss = totalEvalLoss / max(len(testIm), 1)
             accuracy = correct / max(total, 1)
+            valLossList.append(avgEvalLoss)
+            valAccList.append(accuracy)
 
-            print(f"Epoch [{epoch+1}/{epochs}] Eval Loss: {avgEvalLoss:.4f}, Accuracy: {accuracy*100:.2f}%\n")
+            print(f"Val Loss: {avgEvalLoss:.4f}, Val Accuracy: {accuracy*100:.4f}%\n")
 
-
-        return
+        return  [trainLossList, trainAccList , valLossList, valAccList], [predList, targetList] 
     
     def predict(self):
+
         return
     
-    def save(self):
-        return
+    def save(self,path):
+        torch.save(self.state_dict(), path)
+        return path
 
-    def load(self):
+    def load(self,path,location=None):
+        self.load_state_dict(torch.load(path, map_location=location))
+        self.loaded=True
         return
     
-
-
-
 class GraphResidualBlock(nn.Module):
     def __init__(self, in_channels, out_channels, hiddenDim):
         super().__init__()
@@ -209,7 +230,6 @@ class GraphResidualBlock(nn.Module):
         
         return x
 
-
 class BertGraphEncoder(BertLayer):
     def __init__(self, config,inChannels,outChannels):
         super().__init__(config)
@@ -222,6 +242,7 @@ class BertGraphEncoder(BertLayer):
     def forward(self, hidden_states, attention_mask=None, head_mask=None,
                 encoder_hidden_states=None, encoder_attention_mask=None,
                 past_key_value=None, output_attentions=False, edge_index=None):
+        
         #print("hiddenst")
         #print(hidden_states.shape)
         #print(edge_index.shape)
@@ -259,20 +280,11 @@ class BertGraphEncoder(BertLayer):
         layer_output = self.output(intermediate_output, gnn_output)
 
         return (layer_output,)
-    
-
-
-
-
-    
-
-    
+       
 def main():
 
     data = dataPipeline("D:\dionigi\Documents\Python scripts\\aml2025Data\dataNorm",split=0.8,batches=1,classes=12)
-    #    for elem,_ in data[0][0]:
-    #    x= elem
-  
+   
 
     resnet = resnet50(weights=ResNet50_Weights.DEFAULT)
     modules = list(resnet.children())[:-1]
@@ -281,20 +293,16 @@ def main():
     # Input shape: whatever
     # Output shape: torch.Size([1, 2048, 1, 1])
 
-    '''dummy_input = torch.randn(1, 3, 1000, 1000)
-
-    # Forward pass
-    with torch.no_grad():
-        output = featureExtractor(dummy_input)
-
-    print("Output shape:", output.shape)'''
 
     mT=model(backbone=featureExtractor)
 
     lossFunction = torch.nn.L1Loss()
     optimizer = torch.optim.AdamW(mT.parameters(), lr=1e-4, weight_decay=1e-5)
 
-    mT.trainL(dataLoaders=data,lossFunc=lossFunction,optimizer=optimizer,epochs=5)
+    [tL, tAcc, teL, teAcc], [pred, targs] =mT.trainL(dataLoaders=data,lossFunc=lossFunction,optimizer=optimizer,epochs=1)
+
+    #ev.lossAndAccGraph(tL, tAcc, teL, teAcc)
+    ev.confusionMatAndFScores(pred,targs)
 
     return "done"
 
