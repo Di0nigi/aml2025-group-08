@@ -8,10 +8,12 @@ import numpy as np
 
 def loadGraphs(dir):
     d=[]
+    im=[]
     for subDir in os.listdir(dir):
         n = f"{dir}\{subDir}"
         if "_lnd" in subDir:
             sd=[]
+            si=[]
             for file in os.listdir(n):
                 with open(f"{n}\\{file}", 'r') as f:
                     data = json.load(f)['keypoints']
@@ -23,14 +25,15 @@ def loadGraphs(dir):
                         print(f"{n[:-4]}\\{file[:-9]}.png")
                         os.remove(f"{n[:-4]}\\{file[:-9]}.png")
                         #print(data)
-                        break
                     else:
                         e=data.pop()
                         e = [[e[x]['start'],e[x]['end']] for x in range(len(e))]
                         v = [[data[x]['x'],data[x]['y'],data[x]['z'],data[x]['visibility']] for x in range(len(data))]
                         sd.append((torch.tensor(v),torch.tensor(e)))
+                        si.append(f"{n[:-4]}\\{file[:-9]}.png")
             d.append(sd)
-    return d
+            im.append(si)
+    return d,im
 
 def buildAdjMat(edges):
     #[[2,3],[3,4],[5,6]]

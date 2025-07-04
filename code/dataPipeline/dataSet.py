@@ -1,8 +1,9 @@
 
 import numpy  as np
+import re
 import os
 import torch 
-from PIL import Image
+from PIL import Image, ImageFile
 import matplotlib.pyplot as plt
 import mediapipe as mp
 import cv2
@@ -12,10 +13,15 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader, Dataset,TensorDataset, Subset
 
 from torchvision import transforms
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 
-def loadData(path):
+
+def loadData(path,norm=False):
     r = os.listdir(path)
+    if norm:
+        r = sorted(r, key=lambda x: int(re.match(r'\d+', x).group()))
+    #print(r)
     out=[]
     l=[]
     for elem in r:
@@ -121,37 +127,39 @@ def applyPadding(im,dim,sz):
 def normDataset(data,targetShape=(500,500,3)):
     out=[]
     out2=[]
-    for dir in data:
-        #dirs = os.listdir(dir)
-        #if ()
-        d=[]
-        d2=[]
-        for pic in dir:
-            im = Image.open(pic)
-            im=np.array(im)
-            dim = im.shape
-            if len(dim)==2:
-                im = np.stack([im] * 3, axis=-1)
-            if len(dim)==3 and im.shape[2]>3:
-                im=im[:, :, :3]
-            '''if dim == targetShape:
-                break
-            if dim[0]>targetShape[0]:
-                im = applyCrop(im,0,targetShape[0])
-            else:
-                im = applyPadding(im,0,targetShape[0])
-            if dim[1]>targetShape[1]:
-                im = applyCrop(im,1,targetShape[1])
-            else:
-                im = applyPadding(im,1,targetShape[1])
-            #print(im.shape)'''
-            im = im.astype(np.uint8)
-            lndMarks = getLandMarks(im)
-            im = cv2.resize(im,(targetShape[0],targetShape[1]))
-            d.append(im)
-            d2.append(lndMarks)
-        out.append(d)
-        out2.append(d2)
+    mp_pose = mp.solutions.pose
+    with mp_pose.Pose(static_image_mode=True) as pose:
+        for dir in data:
+            #dirs = os.listdir(dir)
+            #if ()
+            d=[]
+            d2=[]
+            for pic in dir:
+                im = Image.open(pic)
+                im=np.array(im)
+                dim = im.shape
+                if len(dim)==2:
+                    im = np.stack([im] * 3, axis=-1)
+                if len(dim)==3 and im.shape[2]>3:
+                    im=im[:, :, :3]
+                '''if dim == targetShape:
+                    break
+                if dim[0]>targetShape[0]:
+                    im = applyCrop(im,0,targetShape[0])
+                else:
+                    im = applyPadding(im,0,targetShape[0])
+                if dim[1]>targetShape[1]:
+                    im = applyCrop(im,1,targetShape[1])
+                else:
+                    im = applyPadding(im,1,targetShape[1])
+                #print(im.shape)'''
+                im = im.astype(np.uint8)
+                lndMarks = getLandMarks(im,pose)
+                im = cv2.resize(im,(targetShape[0],targetShape[1]))
+                d.append(im)
+                d2.append(lndMarks)
+            out.append(d)
+            out2.append(d2)
 
 
     return out,out2
@@ -171,7 +179,7 @@ def saveData(lis,lis2,directory):
         if str(dir)+"_lnd" not in d:
             os.mkdir(os.path.join(directory,str(dir)+"_lnd"))
         for n,im in enumerate(lis2[dir]):
-            print("eo")
+            #print("eo")
             with open(f"{directory}\{dir}_lnd\{n}_lnd.json", 'w') as f:
                 json.dump({"keypoints": lis2[dir][n]}, f, indent=2)
             
@@ -180,10 +188,10 @@ def saveData(lis,lis2,directory):
 
 
 
-def getLandMarks(image):
+def getLandMarks(image,pose):
     
-    mp_pose = mp.solutions.pose
-    pose = mp_pose.Pose(static_image_mode=True)
+    #mp_pose = mp.solutions.pose
+    #pose = mp_pose.Pose(static_image_mode=True)
     #mpDrawing = mp.solutions.drawing_utils
 
   
@@ -194,7 +202,7 @@ def getLandMarks(image):
     results = pose.process(image)
 
     vertices = []
-    edges = list(mp_pose.POSE_CONNECTIONS)
+    edges = list(mp.solutions.pose.POSE_CONNECTIONS)
     keypoints = []
     if results.pose_landmarks:
         '''h, w, _ = image.shape
@@ -232,7 +240,8 @@ def getLandMarks(image):
 def openImages(listOfImages):
     out = []
     for elem in listOfImages:
-        out.append(Image.open(elem))
+        with Image.open(elem) as im:
+         out.append(im)
     return out
 
 def oneHot(n,max):
@@ -240,7 +249,7 @@ def oneHot(n,max):
     out = F.one_hot(index, num_classes=max)
     return out
 
-toTensor = transforms.ToTensor()
+
 
 def shuffleTensorList(tensorList):
     
@@ -276,20 +285,24 @@ def getLoaders(datasets,batch):
 # gets the data path split and batches returns dataloaders
 
 def dataPipeline(path,split,batches=1,classes=12):
-    files = loadData(path)[::2]
-    images = [openImages(l) for l in files]
-    graphs = eu.loadGraphs(path)
+    files = loadData(path,norm=True)[::2]
+    #print(files)
+    #images = [openImages(l) for l in files]
+    graphs,normIms = eu.loadGraphs(path)
     imageData=[]
     vertexData=[]
     edgeData=[]
     targets=[]
+    toTensor = transforms.ToTensor()
     for pose in range(len(files)):
-        for elem in range(len(images[pose])):
-            im = images[pose][elem] 
+        for elem in range(len(normIms[pose])):
+            im = normIms[pose][elem]
+            #print(type(im)) 
+            im = Image.open(im)
             im = toTensor(im)
             #print(im.shape)
             imageData.append(im)
-            #print(elem)
+            #print(f"{pose},{elem}")
             vertexData.append(graphs[pose][elem][0])
             edgeData.append(graphs[pose][elem][1])
             #im = transforms.ToTensor(im)
@@ -317,11 +330,11 @@ def dataPipeline(path,split,batches=1,classes=12):
 
 #print(loadData("D:\dionigi\Documents\Python scripts\\aml2025Data\data"))
 def main ():
-    files=loadData("D:\dionigi\Documents\Python scripts\\aml2025Data\data")
+    #files=loadData("D:\dionigi\Documents\Python scripts\\aml2025Data\data")
     #dataPipeline("D:\dionigi\Documents\Python scripts\\aml2025Data\dataNorm",split=0.8)
-    data=normDataset(files)
+    #data=normDataset(files)
 
-    saveData(data[0],data[1],"D:\dionigi\Documents\Python scripts\\aml2025Data\dataNorm")
+    #saveData(data[0],data[1],"D:\dionigi\Documents\Python scripts\\aml2025Data\dataNorm")
     
 
     return "done"

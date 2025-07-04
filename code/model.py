@@ -105,7 +105,10 @@ class model(nn.Module):
                 e,_ = batch3
                 graph=(v,e)
                 y = self.forward([im,graph])
-                t = t.view_as(y)
+                
+                t = t.squeeze(1)
+                t = t.argmax(dim=1).long() 
+                #print(t.shape)
                 #print(f"shape t {y.shape}") 
                 #print(f"shape t {t.shape}") 
                 loss = self.loss(y,t)
@@ -146,7 +149,10 @@ class model(nn.Module):
                     graph = (v, e)
 
                     y = self.forward([im, graph])
-                    t = t.view_as(y) 
+                    #t = t.view_as(y) 
+                    #t = t.view(-1).long()
+                    t = t.squeeze(1)
+                    t = t.argmax(dim=1).long() 
                     loss = self.loss(y, t)
                     totalEvalLoss += loss.item()
 
@@ -283,7 +289,7 @@ class BertGraphEncoder(BertLayer):
        
 def main():
 
-    data = dataPipeline("D:\dionigi\Documents\Python scripts\\aml2025Data\dataNorm",split=0.8,batches=1,classes=12)
+    data = dataPipeline("D:\dionigi\Documents\Python scripts\\aml2025Data\dataNorm",split=0.8,batches=64,classes=12)
    
 
     resnet = resnet50(weights=ResNet50_Weights.DEFAULT)
