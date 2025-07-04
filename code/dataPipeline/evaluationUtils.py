@@ -34,9 +34,7 @@ def confusionMatAndFScores(targets,predictions,classes=[]):
 
     targets = [t.argmax(dim=1) for t in targets]
     predictions = [ p.argmax(dim=1) for p in predictions]
-    classes =[f"x" for x in range(12)]
-
-
+    classes = [f"x" for x in range(12)]
 
     report = classification_report(targets, predictions, target_names=classes, digits=4)
     print(report)

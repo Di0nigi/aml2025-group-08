@@ -296,7 +296,7 @@ def main():
 
     mT=model(backbone=featureExtractor)
 
-    lossFunction = torch.nn.L1Loss()
+    lossFunction = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.AdamW(mT.parameters(), lr=1e-4, weight_decay=1e-5)
 
     [tL, tAcc, teL, teAcc], [pred, targs] =mT.trainL(dataLoaders=data,lossFunc=lossFunction,optimizer=optimizer,epochs=1)

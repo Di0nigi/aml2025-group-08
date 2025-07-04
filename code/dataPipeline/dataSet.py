@@ -116,7 +116,6 @@ def applyPadding(im,dim,sz):
         outIm = np.concatenate((padl, im, padr))
     
     return outIm
-
 '''
 
 def normDataset(data,targetShape=(500,500,3)):
@@ -215,7 +214,6 @@ def getLandMarks(image):
     return keypoints
 
 
-
 '''def showImage(img, cmap=None, title=None):
 
     plt.figure(figsize=(6, 6))
@@ -241,9 +239,8 @@ def oneHot(n,max):
     index = torch.tensor([n])
     out = F.one_hot(index, num_classes=max)
     return out
-toTensor = transforms.ToTensor()
 
-import torch
+toTensor = transforms.ToTensor()
 
 def shuffleTensorList(tensorList):
     
@@ -320,11 +317,11 @@ def dataPipeline(path,split,batches=1,classes=12):
 
 #print(loadData("D:\dionigi\Documents\Python scripts\\aml2025Data\data"))
 def main ():
-    #files=loadData("D:\dionigi\Documents\Python scripts\\aml2025Data\data")
+    files=loadData("D:\dionigi\Documents\Python scripts\\aml2025Data\data")
     #dataPipeline("D:\dionigi\Documents\Python scripts\\aml2025Data\dataNorm",split=0.8)
-    #data=normDataset([files[0]])
+    data=normDataset(files)
 
-    #saveData(data[0],data[1],"D:\dionigi\Documents\Python scripts\\aml2025Data\dataNorm")
+    saveData(data[0],data[1],"D:\dionigi\Documents\Python scripts\\aml2025Data\dataNorm")
     
 
     return "done"
