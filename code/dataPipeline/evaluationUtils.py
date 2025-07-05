@@ -31,6 +31,7 @@ def confusionMatAndFScores(targets,predictions,classes=[]):
 
     #print(targets)
     #print(predictions)
+    
 
     targets = [t.argmax(dim=1) for t in targets]
     predictions = [ p.argmax(dim=1) for p in predictions]

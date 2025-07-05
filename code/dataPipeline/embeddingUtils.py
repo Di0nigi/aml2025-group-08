@@ -57,14 +57,17 @@ def buildAdjMat(edges):
 
     return torch.tensor(adj)
 
-def concatCoor(verteces):
+def concatCoor(vertices):
 
-    v = np.array(verteces)
-    #print(v.shape)
-    v= v.flatten()
-    #print(v.shape)
+    #verteces=verteces.detach().cpu()
 
-    return torch.tensor(v)
+    #v = np.array(verteces)
+    #print(v.shape)
+    #v= v.flatten()
+    #print(v.shape)
+    v = vertices.flatten()
+
+    return v #torch.tensor(v) v
 
 ## takes matrix of tensors and matrix of tuples of matricies returns matrix of vectors
 
@@ -80,7 +83,11 @@ def embPipeline(data,graphs):
         #mI=getMaxIndex(ed.squeeze().permute(1,0))
         #print(mI)
         mI= 32 # should be consistent across 
-        emb= torch.concat((elem,concatCoor(vt),buildAdjMat(ed)))
+        adjMat = buildAdjMat(ed).to(elem.device)
+        #print(elem.device)
+        #print(concatCoor(vt).device)
+        #print(buildAdjMat(ed).device)
+        emb= torch.concat((elem,concatCoor(vt),adjMat))
         emb = torch.stack([emb for x in range(mI+1)])
        #print("shape")
         #print(emb.shape)
