@@ -35,6 +35,29 @@ def loadGraphs(dir):
             im.append(si)
     return d,im
 
+def addClsTkCons(edg):
+    
+    B, N, _ = edg.shape
+    edg = edg + 1  
+
+    augmentedEdges = []
+
+    for b in range(B):
+        edges = edg[b]  
+        uniqueNodes = torch.unique(edges)
+        
+       
+        rootEdges = torch.stack([
+            torch.zeros_like(uniqueNodes),
+            uniqueNodes
+        ], dim=1)  
+
+        combined = torch.cat([edges, rootEdges], dim=0)  
+        augmentedEdges.append(combined)
+
+    
+    return torch.stack(augmentedEdges)
+
 def buildAdjMat(edges):
     #[[2,3],[3,4],[5,6]]
     
@@ -71,7 +94,7 @@ def concatCoor(vertices):
 
 ## takes matrix of tensors and matrix of tuples of matricies returns matrix of vectors
 
-def embPipeline(data,graphs):
+def embPipeline(data,graphs,clsToken):
     embeddings=[]
     for ind, elem in enumerate(data):
         vt=graphs[0][ind]
@@ -90,6 +113,7 @@ def embPipeline(data,graphs):
         emb= torch.concat((elem,concatCoor(vt),adjMat))
         #print(emb.shape)
         emb = torch.stack([emb for x in range(mI+1)])
+        emb = torch.concat((clsToken,emb))
        #print("shape")
         #print(emb.shape)
         embeddings.append(emb)

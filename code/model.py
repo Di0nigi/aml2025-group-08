@@ -3,7 +3,7 @@ import torch
 import dataPipeline.evaluationUtils as ev
 from torchvision.models import resnet50, ResNet50_Weights, resnet18, ResNet18_Weights
 from transformers import BertTokenizer, BertModel, BertConfig
-from dataPipeline.embeddingUtils import embPipeline
+from dataPipeline.embeddingUtils import embPipeline,addClsTkCons
 from dataPipeline.dataSet import dataPipeline
 from torch_geometric.nn import GCNConv 
 from torch_geometric.data import Data,Batch
@@ -49,6 +49,9 @@ class model(nn.Module):
         self.dropout=nn.Dropout(dropout_rate)
 
         self.classifier = nn.Linear(gnn_dim, num_classes)
+
+        self.cls = nn.Parameter(torch.zeros(size=(1,dimEmbeddings)))
+        nn.init.trunc_normal_(self.cls, std=0.02)
         
         return 
     
@@ -57,16 +60,21 @@ class model(nn.Module):
 
         graph = data[1]
         edges = data[1][1] 
+        #print(edges.shape)
+        edges=addClsTkCons(edges)
+        #print(edges.shape)
 
         # Backbone pass, extract CNN features
         extractedFeatures = self.backBone(im)
 
         # Embeddings computations
-        embeddings = embPipeline(extractedFeatures,graph)
+        self.cls=self.cls.to(self.dev)
+        embeddings = embPipeline(extractedFeatures,graph,self.cls)
         #print(type(embeddings))
         embeddings = torch.stack(embeddings)
-        #print(embeddings.shape)
+        
         embeddings=self.embed(embeddings)
+        #print(embeddings.shape)
 
         # bert with injected GNN
 
@@ -78,21 +86,29 @@ class model(nn.Module):
         for layer_module in self.bert.encoder.layer:
             layer_outputs = layer_module(hidden_states=output, edge_index=edges)
             output = layer_outputs[0]  
+        
+        #print(output.shape)
 
         # CLS token
         cls_output = output[:, 0, :]
+        #cls_output=output
 
         cls_output=self.dropout(cls_output)
+
 
         logits = self.classifier(cls_output)
 
 
         return logits
     
-    def trainL(self,dataLoaders,lossFunc, optimizer ,epochs=10):
+    def trainL(self,dataLoaders,lossFunc, optimizer ,epochs=10,patience=5):
 
         self.loss =lossFunc
         self.optim =optimizer
+
+        best_val_loss = float('inf')
+        epochs_no_improve = 0
+        best_model_state = None
 
         trainIm=dataLoaders[0][0]
         trainVe=dataLoaders[0][1]
@@ -186,13 +202,23 @@ class model(nn.Module):
                     # Classification: accuracy
                     predList.append(y)
                     targetList.append(t)
-                    
+
                     preds = y.argmax(dim=1)
                     
                     correct += (preds == t).sum().item()
                     total += t.numel()
 
             avgEvalLoss = totalEvalLoss / max(len(testIm), 1)
+            if avgEvalLoss < best_val_loss:
+                best_val_loss = avgEvalLoss
+                epochs_no_improve = 0
+                best_model_state = self.state_dict()  
+            else:
+                epochs_no_improve += 1
+                if epochs_no_improve >= patience:
+                    print(f"Early stopping at epoch {epoch+1} due to no improvement in validation loss.")
+                    self.load_state_dict(best_model_state)  
+                    break
             accuracy = correct / max(total, 1)
             valLossList.append(avgEvalLoss)
             valAccList.append(accuracy)
@@ -324,9 +350,9 @@ def main():
         print("CUDA not available")
         device = torch.device("cpu")
     
-    data = dataPipeline("D:\dionigi\Documents\Python scripts\\aml2025Data\dataNormL",split=0.8,batches=16,classes=12)
+    data = dataPipeline("D:\dionigi\Documents\Python scripts\\aml2025Data\dataNorm",split=0.8,batches=16,classes=12)
 
-    ev.classesDistribution(data)
+    #ev.classesDistribution(data)
    
 
     #resnet = resnet50(weights=ResNet50_Weights.DEFAULT)
@@ -338,7 +364,7 @@ def main():
     # Output shape: torch.Size([1, 2048, 1, 1])
 
 
-    mT=model(backbone=featureExtractor,device=device,numLayers=6)
+    mT=model(backbone=featureExtractor,device=device,numLayers=4)
     mT.to(device)
 
     lossFunction = torch.nn.CrossEntropyLoss()
