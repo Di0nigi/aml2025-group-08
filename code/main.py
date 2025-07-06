@@ -225,7 +225,7 @@ def run_quick_evaluation(dataset_path):
 
 def main():
     
-    dataset_path = "/Users/valentinazingarello/Downloads/dataNormL" 
+    dataset_path = "D:\dionigi\Documents\Python scripts\\aml2025Data\dataNormL" 
     
     print("Yoga Pose Classification - Comprehensive Evaluation")
     print("="*60)

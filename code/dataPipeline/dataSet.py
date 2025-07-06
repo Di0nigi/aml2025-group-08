@@ -31,7 +31,7 @@ def loadData(path,norm=False):
             for e in os.listdir(n):
                 l.append(os.path.join(n,e))
             #print(len(l))
-        out.append(l)
+        out.append(l[:55])
     return out
 
 '''
@@ -325,7 +325,7 @@ def dataPipeline(path,split,batches=1,classes=12):
 
     testLoaders = getLoaders([imageDataSetTest,vertexDataSetTest,edgeDataSetTest],batch=batches)
 
-    return trainLoaders,testLoaders
+    return trainLoaders, testLoaders
 
 
 #print(loadData("D:\dionigi\Documents\Python scripts\\aml2025Data\data"))
@@ -334,7 +334,7 @@ def main ():
     #dataPipeline("D:\dionigi\Documents\Python scripts\\aml2025Data\dataNorm",split=0.8)
     #data=normDataset(files)
 
-    #saveData(data[0],data[1],"D:\dionigi\Documents\Python scripts\\aml2025Data\dataNorm")
+    #saveData(data[0],data[1],"D:\dionigi\Documents\Python scripts\\aml2025Data\dataNormL")
     
 
     return "done"

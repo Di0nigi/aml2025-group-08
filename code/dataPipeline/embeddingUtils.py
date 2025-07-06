@@ -88,6 +88,7 @@ def embPipeline(data,graphs):
         #print(concatCoor(vt).device)
         #print(buildAdjMat(ed).device)
         emb= torch.concat((elem,concatCoor(vt),adjMat))
+        #print(emb.shape)
         emb = torch.stack([emb for x in range(mI+1)])
        #print("shape")
         #print(emb.shape)

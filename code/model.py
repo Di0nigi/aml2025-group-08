@@ -1,7 +1,7 @@
 import torch.nn as nn
 import torch
 import dataPipeline.evaluationUtils as ev
-from torchvision.models import resnet50, ResNet50_Weights 
+from torchvision.models import resnet50, ResNet50_Weights, resnet18, ResNet18_Weights
 from transformers import BertTokenizer, BertModel, BertConfig
 from dataPipeline.embeddingUtils import embPipeline
 from dataPipeline.dataSet import dataPipeline
@@ -10,7 +10,12 @@ from torch_geometric.data import Data,Batch
 from transformers.models.bert.modeling_bert import BertLayer
 
 class model(nn.Module):
-    def __init__(self,backbone,device, dimEmbeddings=7080, gnn_dim=768, num_classes=12):
+    def __init__(self,backbone,device,numLayers=12, dimEmbeddings=5544, gnn_dim=768, num_classes=12):
+
+        #7080
+
+        self.nL = numLayers
+
         super(model, self).__init__()
         self.loaded=False
         
@@ -33,7 +38,7 @@ class model(nn.Module):
         self.outChannels=self.config.hidden_size
 
         self.bert.encoder.layer = nn.ModuleList([
-            BertGraphEncoder(self.config,self.inChannels,self.outChannels,device=self.dev) for _ in range(self.config.num_hidden_layers)
+            BertGraphEncoder(self.config,self.inChannels,self.outChannels,device=self.dev) for _ in range(self.nL)#(self.config.num_hidden_layers)
         ])
 
         #for param in self.bert.parameters():
@@ -310,11 +315,14 @@ def main():
     else:
         print("CUDA not available")
         device = torch.device("cpu")
+    
+    data = dataPipeline("D:\dionigi\Documents\Python scripts\\aml2025Data\dataNorm",split=0.8,batches=32,classes=12)
 
-    data = dataPipeline("D:\dionigi\Documents\Python scripts\\aml2025Data\dataNormL",split=0.8,batches=16,classes=12)
+    #ev.classesDistribution(data)
    
 
-    resnet = resnet50(weights=ResNet50_Weights.DEFAULT)
+    #resnet = resnet50(weights=ResNet50_Weights.DEFAULT)
+    resnet = resnet18(weights=ResNet18_Weights.DEFAULT)
     modules = list(resnet.children())[:-1]
     featureExtractor = nn.Sequential(*modules)
 
@@ -322,69 +330,29 @@ def main():
     # Output shape: torch.Size([1, 2048, 1, 1])
 
 
-    mT=model(backbone=featureExtractor,device=device)
+    mT=model(backbone=featureExtractor,device=device,numLayers=4)
     mT.to(device)
 
     lossFunction = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.AdamW(mT.parameters(), lr=1e-4, weight_decay=1e-5)
 
-    [tL, tAcc, teL, teAcc], [pred, targs] =mT.trainL(dataLoaders=data,lossFunc=lossFunction,optimizer=optimizer,epochs=1)
+    res =mT.trainL(dataLoaders=data,lossFunc=lossFunction,optimizer=optimizer,epochs=10)
 
     #print([pred, targs])
+    #[tL, tAcc, teL, teAcc], [pred, targs]
 
-    '''[pred, targs] = [[torch.tensor([[-0.1821, -1.1024, -1.6555,  0.4486,  0.7422, -0.2335,  0.9218,  0.3999,
-          0.2800, -0.4259,  0.2247,  1.4254],
-        [-0.1757, -1.0360, -1.6373,  0.4360,  0.7465, -0.2144,  1.0030,  0.3926,
-          0.1779, -0.4068,  0.1847,  1.4592],
-        [-0.1513, -1.0966, -1.6294,  0.3786,  0.6989, -0.2010,  0.9874,  0.3709,
-          0.2586, -0.4279,  0.1575,  1.4740],
-        [-0.2235, -1.1038, -1.6960,  0.4443,  0.7384, -0.2643,  0.9733,  0.3997,
-          0.1987, -0.4399,  0.1530,  1.4961],
-        [-0.1866, -1.0786, -1.6476,  0.4639,  0.7343, -0.2489,  0.9460,  0.4055,
-          0.2628, -0.4152,  0.2202,  1.4546],
-        [-0.1746, -1.0417, -1.6206,  0.4772,  0.7441, -0.2190,  1.0052,  0.3992,
-          0.1781, -0.4368,  0.1699,  1.4816],
-        [-0.1832, -1.0561, -1.6461,  0.4645,  0.7519, -0.2365,  0.9691,  0.3889,
-          0.2778, -0.4212,  0.2180,  1.4513],
-        [-0.1060, -1.0424, -1.5828,  0.4698,  0.7148, -0.2190,  0.9975,  0.4262,
-          0.1751, -0.4002,  0.1729,  1.4916],
-        [-0.1625, -1.0478, -1.6198,  0.4628,  0.7723, -0.2360,  0.9582,  0.3823,
-          0.2498, -0.4422,  0.1876,  1.4649],
-        [-0.1792, -1.0582, -1.6481,  0.4633,  0.7405, -0.2405,  0.9493,  0.3858,
-          0.2467, -0.4235,  0.2083,  1.4635],
-        [-0.1540, -1.0685, -1.6376,  0.4620,  0.7089, -0.2464,  1.0082,  0.3871,
-          0.2019, -0.4184,  0.1445,  1.5237],
-        [-0.2133, -1.0994, -1.6922,  0.4259,  0.7632, -0.2535,  0.9439,  0.3855,
-          0.2340, -0.4258,  0.1990,  1.4456],
-        [-0.1621, -1.0523, -1.6415,  0.4519,  0.7103, -0.2330,  0.9519,  0.3899,
-          0.2355, -0.3925,  0.2151,  1.4677],
-        [-0.1658, -1.0885, -1.6336,  0.4583,  0.7023, -0.2367,  0.9445,  0.3688,
-          0.2440, -0.4405,  0.1770,  1.4558],
-        [-0.1234, -1.0634, -1.6564,  0.5083,  0.6712, -0.2366,  0.9906,  0.3639,
-          0.1722, -0.3892,  0.1451,  1.5248],
-        [-0.1377, -1.0776, -1.6195,  0.4535,  0.6718, -0.2500,  0.9772,  0.3778,
-          0.1834, -0.4087,  0.1793,  1.4947]], device='cuda:0'), torch.tensor([[-0.1594, -1.0590, -1.6460,  0.4551,  0.7268, -0.2557,  1.0176,  0.3886,
-          0.2143, -0.4125,  0.1576,  1.5054],
-        [-0.1716, -1.0657, -1.6464,  0.4715,  0.7422, -0.2549,  0.9945,  0.4085,
-          0.1934, -0.4328,  0.1586,  1.5050],
-        [-0.1695, -1.0916, -1.6675,  0.4612,  0.7286, -0.2388,  0.9831,  0.3889,
-          0.2461, -0.4382,  0.1740,  1.4728],
-        [-0.1701, -1.0763, -1.6442,  0.4565,  0.6831, -0.2633,  0.9850,  0.3745,
-          0.2161, -0.4022,  0.1569,  1.5314],
-        [-0.1507, -1.0540, -1.6242,  0.4493,  0.7016, -0.2404,  0.9773,  0.3717,
-          0.2127, -0.4192,  0.1669,  1.4804],
-        [-0.1600, -1.0547, -1.6317,  0.4844,  0.7723, -0.2397,  0.9513,  0.4043,
-          0.2647, -0.4395,  0.1849,  1.4626],
-        [-0.1116, -1.0518, -1.6072,  0.4768,  0.6741, -0.2301,  0.9745,  0.3583,
-          0.1616, -0.4133,  0.1397,  1.5406],
-        [-0.1740, -1.0851, -1.6321,  0.4163,  0.7000, -0.2626,  0.9474,  0.3860,
-          0.2337, -0.4350,  0.1805,  1.4771]], device='cuda:0')], [torch.tensor([ 8,  4,  1,  3,  5, 10,  2,  9,  5,  2,  0,  7,  2,  3,  6,  6],
-       device='cuda:0'), torch.tensor([ 0, 10,  5,  1,  9,  3, 10,  7], device='cuda:0')]]'''
+    #print(res)
 
-   # print(len(targs))
-   # print(len(pred))
+
+
+    #print(len(targs))
+    #print(len(pred))
+    
     #ev.lossAndAccGraph(tL, tAcc, teL, teAcc)
+
     #ev.confusionMatAndFScores(targs,pred)
+
+    #ev.displayData(res)
 
     return "done"
 
