@@ -10,7 +10,7 @@ from torch_geometric.data import Data,Batch
 from transformers.models.bert.modeling_bert import BertLayer
 
 class model(nn.Module):
-    def __init__(self,backbone,device,numLayers=12, dimEmbeddings=5544, gnn_dim=768, num_classes=12):
+    def __init__(self,backbone,device,numLayers=12, dimEmbeddings=5544, gnn_dim=768,dropout_rate=0.1, num_classes=12):
 
         #7080
 
@@ -28,6 +28,8 @@ class model(nn.Module):
         self.embed = nn.Sequential(
             nn.Linear(in_features=dimEmbeddings, out_features=gnn_dim),
             nn.ReLU(),
+            nn.Dropout(dropout_rate)  
+
         )
 
         # Transformer encoder, inject BERT layers
@@ -43,6 +45,8 @@ class model(nn.Module):
 
         #for param in self.bert.parameters():
         #    param.requires_grad = False
+
+        self.dropout=nn.Dropout(dropout_rate)
 
         self.classifier = nn.Linear(gnn_dim, num_classes)
         
@@ -77,7 +81,11 @@ class model(nn.Module):
 
         # CLS token
         cls_output = output[:, 0, :]
+
+        cls_output=self.dropout(cls_output)
+
         logits = self.classifier(cls_output)
+
 
         return logits
     
@@ -316,9 +324,9 @@ def main():
         print("CUDA not available")
         device = torch.device("cpu")
     
-    data = dataPipeline("D:\dionigi\Documents\Python scripts\\aml2025Data\dataNorm",split=0.8,batches=32,classes=12)
+    data = dataPipeline("D:\dionigi\Documents\Python scripts\\aml2025Data\dataNormL",split=0.8,batches=16,classes=12)
 
-    #ev.classesDistribution(data)
+    ev.classesDistribution(data)
    
 
     #resnet = resnet50(weights=ResNet50_Weights.DEFAULT)
@@ -330,16 +338,16 @@ def main():
     # Output shape: torch.Size([1, 2048, 1, 1])
 
 
-    mT=model(backbone=featureExtractor,device=device,numLayers=4)
+    mT=model(backbone=featureExtractor,device=device,numLayers=6)
     mT.to(device)
 
     lossFunction = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.AdamW(mT.parameters(), lr=1e-4, weight_decay=1e-5)
 
-    res =mT.trainL(dataLoaders=data,lossFunc=lossFunction,optimizer=optimizer,epochs=10)
+    res =mT.trainL(dataLoaders=data,lossFunc=lossFunction,optimizer=optimizer,epochs=15)
 
     #print([pred, targs])
-    #[tL, tAcc, teL, teAcc], [pred, targs]
+    [tL, tAcc, teL, teAcc], [pred, targs] = res
 
     #print(res)
 
@@ -352,7 +360,7 @@ def main():
 
     #ev.confusionMatAndFScores(targs,pred)
 
-    #ev.displayData(res)
+    ev.displayData(res)
 
     return "done"
 

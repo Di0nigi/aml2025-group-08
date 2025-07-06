@@ -31,7 +31,7 @@ def loadData(path,norm=False):
             for e in os.listdir(n):
                 l.append(os.path.join(n,e))
             #print(len(l))
-        out.append(l[:55])
+        out.append(l)
     return out
 
 '''

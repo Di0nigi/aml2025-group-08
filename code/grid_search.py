@@ -2,7 +2,7 @@
 from itertools import product
 import torch
 import torch.nn as nn
-from torchvision.models import resnet50, ResNet50_Weights
+from torchvision.models import resnet50, ResNet50_Weights, resnet18, ResNet18_Weights
 from dataPipeline.dataSet import dataPipeline
 from model import model  
 import numpy as np
@@ -23,8 +23,9 @@ def grid_search_hyperparameters(model_class, dataset_path, device, param_grid, e
     train_data, val_data = dataPipeline(dataset_path, split=0.8, batches=batches, classes=classes)
     
     # Initialize backbone (ResNet50) once
-    resnet = resnet50(weights=ResNet50_Weights.DEFAULT)
-    feature_extractor = nn.Sequential(*list(resnet.children())[:-1])
+    resnet = resnet18(weights=ResNet18_Weights.DEFAULT)
+    modules = list(resnet.children())[:-1]
+    feature_extractor = nn.Sequential(*modules)
     
     for i, params in enumerate(param_combinations):
         param_dict = dict(zip(param_names, params))
@@ -100,7 +101,7 @@ def main():
         'lr': [1e-4, 1e-5],                    # optimizer parameter
         'weight_decay': [1e-4, 1e-5],          # optimizer parameter
         'dropout_rate': [0.1, 0.3, 0.5],       # model parameter
-        'num_layers': [2, 4, 6]                # model parameter (BERT layers)
+        'numLayers': [2, 4, 6]                # model parameter (BERT layers)
     }
     # Define device
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -108,10 +109,10 @@ def main():
     # Run grid search
     search_results = grid_search_hyperparameters(
         model_class=model,
-        dataset_path="/Users/valentinazingarello/Downloads/dataNormL",
+        dataset_path="D:\dionigi\Documents\Python scripts\\aml2025Data\dataNormL",
         device=device,
         param_grid=param_grid,
-        epochs=10,
+        epochs=1,
         batches=16,
         classes=12
     )
