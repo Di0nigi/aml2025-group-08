@@ -9,6 +9,9 @@ import pandas as pd
 from itertools import product
 import json
 import os
+from model import resnet50, ResNet50_Weights
+from torch import nn
+from dataPipeline.dataSet import DataLoader, Subset
 
 
 def calculate_accuracy(predictions, targets):
@@ -150,126 +153,6 @@ def comprehensive_evaluation(predictions, targets, class_names=None, save_dir=No
     
     return results
 
-def stratified_k_fold_evaluation(model_class, dataset, device, k=5, **model_kwargs):
-    
-    # Extract labels for stratification
-    if hasattr(dataset, 'tensors'):
-        labels = dataset.tensors[-1].argmax(dim=1).numpy()
-    else:
-        # If using custom dataset, need to extract labels differently
-        labels = []
-        for i in range(len(dataset)):
-            labels.append(dataset[i][-1].argmax().item())
-        labels = np.array(labels)
-    
-    skf = StratifiedKFold(n_splits=k, shuffle=True, random_state=42)
-    fold_results = []
-    
-    for fold, (train_idx, val_idx) in enumerate(skf.split(range(len(dataset)), labels)):
-        print(f"\nFold {fold + 1}/{k}")
-        
-        # Create data loaders for this fold
-        from torch.utils.data import Subset, DataLoader
-        train_subset = Subset(dataset, train_idx)
-        val_subset = Subset(dataset, val_idx)
-        
-        train_loader = DataLoader(train_subset, batch_size=16, shuffle=True)
-        val_loader = DataLoader(val_subset, batch_size=16, shuffle=False)
-        
-        # Initialize model
-        model = model_class(device=device, **model_kwargs)
-        model.to(device)
-        
-        # Train model
-        loss_fn = torch.nn.CrossEntropyLoss()
-        optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4, weight_decay=1e-5)
-        
-        # Training loop (simplified)
-        model.train()
-        for epoch in range(10):  # Adjust epochs as needed
-            for batch in train_loader:
-                # Adapt this based on your data structure
-                optimizer.zero_grad()
-                # Forward pass, loss calculation, backward pass
-                # This needs to be adapted to your specific model interface
-                optimizer.step()
-        
-        # Evaluate on validation set
-        model.eval()
-        val_predictions = []
-        val_targets = []
-        
-        with torch.no_grad():
-            for batch in val_loader:
-                # Adapt this based on your data structure
-                # Get predictions and targets
-                pass
-        
-        # Calculate metrics for this fold
-        fold_metrics = comprehensive_evaluation(val_predictions, val_targets)
-        fold_results.append(fold_metrics)
-    
-    # Aggregate results across folds
-    aggregated_results = aggregate_cv_results(fold_results)
-    return aggregated_results, fold_results
-
-def aggregate_cv_results(fold_results):
-    """Aggregate results from cross-validation folds"""
-    metrics = ['accuracy', 'top_3_accuracy', 'top_5_accuracy', 
-               'macro_precision', 'macro_recall', 'macro_f1',
-               'weighted_precision', 'weighted_recall', 'weighted_f1']
-    
-    aggregated = {}
-    for metric in metrics:
-        values = [fold[metric] for fold in fold_results]
-        aggregated[f'{metric}_mean'] = np.mean(values)
-        aggregated[f'{metric}_std'] = np.std(values)
-    
-    return aggregated
-
-def grid_search_hyperparameters(model_class, dataset, device, param_grid, cv_folds=3):
-    
-    # Generate all parameter combinations
-    param_names = list(param_grid.keys())
-    param_values = list(param_grid.values())
-    param_combinations = list(product(*param_values))
-    
-    results = []
-    best_score = -np.inf
-    best_params = None
-    
-    for i, params in enumerate(param_combinations):
-        param_dict = dict(zip(param_names, params))
-        print(f"\nTesting parameters {i+1}/{len(param_combinations)}: {param_dict}")
-        
-        # Perform cross-validation with these parameters
-        try:
-            cv_results, _ = stratified_k_fold_evaluation(
-                model_class, dataset, device, k=cv_folds, **param_dict
-            )
-            
-            score = cv_results['accuracy_mean']
-            results.append({
-                'params': param_dict,
-                'cv_score': score,
-                'cv_std': cv_results['accuracy_std'],
-                'all_metrics': cv_results
-            })
-            
-            if score > best_score:
-                best_score = score
-                best_params = param_dict
-                
-        except Exception as e:
-            print(f"Error with parameters {param_dict}: {str(e)}")
-            continue
-    
-    return {
-        'best_params': best_params,
-        'best_score': best_score,
-        'all_results': results
-    }
-
 def save_results(results, save_path):
     #Save evaluation results to file
     # Convert numpy arrays to lists for JSON serialization
@@ -284,7 +167,7 @@ def save_results(results, save_path):
         json.dump(serializable_results, f, indent=2)
 
 def load_results(load_path):
-    #Load evaluation results from file
+    """Load evaluation results from file"""
     with open(load_path, 'r') as f:
         return json.load(f)
 
@@ -319,3 +202,8 @@ def confusionMatAndFScores(targets, predictions):
     results = comprehensive_evaluation(predictions, targets)
     print_evaluation_summary(results)
     return results
+
+
+
+
+
