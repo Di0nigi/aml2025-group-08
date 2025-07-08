@@ -1,14 +1,13 @@
-
 from itertools import product
 import torch
 import torch.nn as nn
 from torchvision.models import resnet50, ResNet50_Weights, resnet18, ResNet18_Weights
 from dataPipeline.dataSet import dataPipeline
-from model import model  
+from model import model,weightDataSet  
 import numpy as np
 
 
-def grid_search_hyperparameters(model_class, dataset_path, device, param_grid, epochs=10, batches=16, classes=12):
+def grid_search_hyperparameters(model_class, dataset_path, device, param_grid, epochs=100, batches=16, classes=9):
    
     # Generate all parameter combinations
     param_names = list(param_grid.keys())
@@ -17,10 +16,12 @@ def grid_search_hyperparameters(model_class, dataset_path, device, param_grid, e
     
     results = []
     best_score = -np.inf
+    best_train = -np.inf
     best_params = None
     
     # Load dataset once
     train_data, val_data = dataPipeline(dataset_path, split=0.8, batches=batches, classes=classes)
+    weightsData = weightDataSet([train_data,val_data])
     
     # Initialize backbone (ResNet50) once
     resnet = resnet18(weights=ResNet18_Weights.DEFAULT)
@@ -46,7 +47,7 @@ def grid_search_hyperparameters(model_class, dataset_path, device, param_grid, e
             model_instance.to(device)
             
             # Training setup
-            loss_fn = torch.nn.CrossEntropyLoss()
+            loss_fn = torch.nn.CrossEntropyLoss(weight=weightsData.to(device))
             optimizer = torch.optim.AdamW(model_instance.parameters(), 
                                          lr=param_dict.get('lr', 1e-4), 
                                          weight_decay=param_dict.get('weight_decay', 1e-5))
@@ -56,11 +57,13 @@ def grid_search_hyperparameters(model_class, dataset_path, device, param_grid, e
                 dataLoaders=[train_data, val_data],
                 lossFunc=loss_fn,
                 optimizer=optimizer,
-                epochs=epochs
+                epochs=epochs,
+                patience=3
             )
             
             # Get final validation accuracy
-            val_accuracy = train_results[3][-1]  # Last validation accuracy
+            val_accuracy = model_instance.bestVal  #train_results[3][-1]  # Last validation accuracy
+            train_accuracy = train_results[1][-1]
             
             # Store results
             result = {
@@ -81,8 +84,12 @@ def grid_search_hyperparameters(model_class, dataset_path, device, param_grid, e
             if val_accuracy > best_score:
                 best_score = val_accuracy
                 best_params = param_dict
+                best_train = train_accuracy 
+
                 
             print(f"Validation accuracy: {val_accuracy:.4f}")
+            print(f"Train accuracy: {train_accuracy:.4f}")
+            
             
         except Exception as e:
             print(f"Error with parameters {param_dict}: {str(e)}")
@@ -91,7 +98,8 @@ def grid_search_hyperparameters(model_class, dataset_path, device, param_grid, e
     return {
         'best_params': best_params,
         'best_score': best_score,
-        'all_results': results
+        'all_results': results,
+        'best_train' : best_train
     }
 
 
@@ -109,18 +117,19 @@ def main():
     # Run grid search
     search_results = grid_search_hyperparameters(
         model_class=model,
-        dataset_path="D:\dionigi\Documents\Python scripts\\aml2025Data\dataNormL",
+        dataset_path="D:\dionigi\Documents\Python scripts\\aml2025Data\dataNorm",
         device=device,
         param_grid=param_grid,
-        epochs=1,
+        epochs=15,
         batches=16,
-        classes=12
+        classes=9
     )
 
     # Print best results
     print("\nBest parameters:")
     print(search_results['best_params'])
     print(f"Best validation accuracy: {search_results['best_score']:.4f}")
+    print(f"Best train accuracy: {search_results['best_train']:.4f}")
 
 if __name__ == "__main__":
     main()

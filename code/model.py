@@ -10,9 +10,11 @@ from torch_geometric.data import Data,Batch
 from transformers.models.bert.modeling_bert import BertLayer
 
 class model(nn.Module):
-    def __init__(self,backbone,device,numLayers=12, dimEmbeddings=5544, gnn_dim=768,dropout_rate=0.1, num_classes=12):
+    def __init__(self,backbone,device,numLayers=12, dimEmbeddings=5544, gnn_dim=768,dropout_rate=0.1, num_classes=9):
 
         #7080
+
+        self.bestVal=0
 
         self.nL = numLayers
 
@@ -209,26 +211,29 @@ class model(nn.Module):
                     total += t.numel()
 
             avgEvalLoss = totalEvalLoss / max(len(testIm), 1)
+            
+            accuracy = correct / max(total, 1)
+            valLossList.append(avgEvalLoss)
+            valAccList.append(accuracy)
+
+            print(f"Val Loss: {avgEvalLoss:.4f}, Val Accuracy: {accuracy*100:.4f}%\n")
             if avgEvalLoss < best_val_loss:
                 best_val_loss = avgEvalLoss
                 epochs_no_improve = 0
-                best_model_state = self.state_dict()  
+                best_model_state = self.state_dict()
+                self.bestVal = best_val_loss  
             else:
                 epochs_no_improve += 1
                 if epochs_no_improve >= patience:
                     print(f"Early stopping at epoch {epoch+1} due to no improvement in validation loss.")
                     self.load_state_dict(best_model_state)  
                     break
-            accuracy = correct / max(total, 1)
-            valLossList.append(avgEvalLoss)
-            valAccList.append(accuracy)
-
-            print(f"Val Loss: {avgEvalLoss:.4f}, Val Accuracy: {accuracy*100:.4f}%\n")
-
+        #self.bestVal = best_val_loss
         return  [trainLossList, trainAccList , valLossList, valAccList], [predList, targetList] 
     
-    def predict(self):
-
+    def predict(self,data):
+        if self.loaded:
+            pass
         return
     
     def save(self,path):
@@ -340,6 +345,28 @@ class BertGraphEncoder(BertLayer):
         layer_output = self.output(intermediate_output, gnn_output)
 
         return (layer_output,)
+    
+def weightDataSet(dataSet):
+    train = dataSet[0][0]
+    
+
+    labelList = []
+
+    for b in train:
+        _,label = b
+        #print(label.shape)
+        label = int(torch.argmax(label))
+        labelList.append(label)
+
+    labelsTensor = torch.tensor(labelList)
+    classCounts = torch.bincount(labelsTensor)
+
+    # Compute weights: inverse frequency
+    weights = 1.0 / classCounts.float()
+    weights = weights / weights.sum()  # optional normalization
+
+    return weights
+
        
 def main():
     #device = 0
@@ -350,10 +377,11 @@ def main():
         print("CUDA not available")
         device = torch.device("cpu")
     
-    data = dataPipeline("D:\dionigi\Documents\Python scripts\\aml2025Data\dataNorm",split=0.8,batches=16,classes=12)
+    data = dataPipeline("D:\dionigi\Documents\Python scripts\\aml2025Data\dataNorm",split=0.8,batches=16,classes=9)
 
     #ev.classesDistribution(data)
-   
+
+    classWeights = weightDataSet(data)
 
     #resnet = resnet50(weights=ResNet50_Weights.DEFAULT)
     resnet = resnet18(weights=ResNet18_Weights.DEFAULT)
@@ -364,13 +392,13 @@ def main():
     # Output shape: torch.Size([1, 2048, 1, 1])
 
 
-    mT=model(backbone=featureExtractor,device=device,numLayers=4)
+    mT=model(backbone=featureExtractor,device=device,numLayers=3,dropout_rate=0.3)
     mT.to(device)
 
-    lossFunction = torch.nn.CrossEntropyLoss()
+    lossFunction = torch.nn.CrossEntropyLoss(weight=classWeights.to(device))
     optimizer = torch.optim.AdamW(mT.parameters(), lr=1e-4, weight_decay=1e-5)
 
-    res =mT.trainL(dataLoaders=data,lossFunc=lossFunction,optimizer=optimizer,epochs=15)
+    res =mT.trainL(dataLoaders=data,lossFunc=lossFunction,optimizer=optimizer,epochs=100,patience=10)
 
     #print([pred, targs])
     [tL, tAcc, teL, teAcc], [pred, targs] = res

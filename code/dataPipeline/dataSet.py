@@ -284,7 +284,7 @@ def getLoaders(datasets,batch):
 
 # gets the data path split and batches returns dataloaders
 
-def dataPipeline(path,split,batches=1,classes=12):
+def dataPipeline(path,split,batches=1,classes=9):
     files = loadData(path,norm=True)[::2]
     #print(files)
     #images = [openImages(l) for l in files]
@@ -334,7 +334,7 @@ def main ():
     #dataPipeline("D:\dionigi\Documents\Python scripts\\aml2025Data\dataNorm",split=0.8)
     #data=normDataset(files)
 
-    #saveData(data[0],data[1],"D:\dionigi\Documents\Python scripts\\aml2025Data\dataNormL")
+    #saveData(data[0],data[1],"D:\dionigi\Documents\Python scripts\\aml2025Data\dataNorm")
     
 
     return "done"
