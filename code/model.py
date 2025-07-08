@@ -377,7 +377,11 @@ def main():
         print("CUDA not available")
         device = torch.device("cpu")
     
-    data = dataPipeline("D:\dionigi\Documents\Python scripts\\aml2025Data\dataNorm",split=0.8,batches=16,classes=9)
+    #device = torch.device("cpu")
+
+    
+    
+    data = dataPipeline("D:\dionigi\Documents\Python scripts\\aml2025Data\dataNorm",split=0.8,batches=1,classes=9)
 
     #ev.classesDistribution(data)
 
@@ -391,14 +395,21 @@ def main():
     # Input shape: whatever
     # Output shape: torch.Size([1, 2048, 1, 1])
 
+    #torch.cuda.empty_cache()
+    #dummy = torch.randn(8, 768, device='cuda')
+    #dummy = dummy @ dummy.T
+    # del dummy
+    # torch.cuda.synchronize()
 
-    mT=model(backbone=featureExtractor,device=device,numLayers=3,dropout_rate=0.3)
+    mT=model(backbone=featureExtractor,device=device,numLayers=6,dropout_rate=0.5)
     mT.to(device)
 
     lossFunction = torch.nn.CrossEntropyLoss(weight=classWeights.to(device))
-    optimizer = torch.optim.AdamW(mT.parameters(), lr=1e-4, weight_decay=1e-5)
+    optimizer = torch.optim.AdamW(mT.parameters(), lr=1e-05, weight_decay= 1e-05)
 
-    res =mT.trainL(dataLoaders=data,lossFunc=lossFunction,optimizer=optimizer,epochs=100,patience=10)
+    res =mT.trainL(dataLoaders=data,lossFunc=lossFunction,optimizer=optimizer,epochs=15,patience=3)
+    mT.save(path="D:\dionigi\Documents\Python scripts\\aml2025Data\models\\bestModel.pth")
+    print(mT.bestVal)
 
     #print([pred, targs])
     [tL, tAcc, teL, teAcc], [pred, targs] = res

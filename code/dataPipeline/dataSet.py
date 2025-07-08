@@ -279,7 +279,7 @@ def splitDataset(dataset, trainRatio=0.8):
 def getLoaders(datasets,batch):
     out=[]
     for dataset in datasets:
-        out.append(DataLoader(dataset,batch_size=batch,shuffle=False))
+        out.append(DataLoader(dataset,batch_size=batch,shuffle=False,num_workers=0, pin_memory=False))
     return out
 
 # gets the data path split and batches returns dataloaders
