@@ -57,7 +57,7 @@ def lossAndAccGraph(trainLoss, trainAcc, valLoss, valAcc,show=True):
 
     return fig
 
-def confusionMatAndFScores(targets,predictions,classes="D:\dionigi\Documents\Python scripts\\aml2025-group-08\docs\classes.txt",show=True):
+def confusionMatAndFScores(targets,predictions,classes="D:\dionigi\Documents\Python scripts\\aml2025-group-08\docs\classes5.txt",show=True):
 
     targets = [t.detach().cpu() for t in targets]
     predictions = [ p.detach().cpu().argmax(dim=1) for p in predictions]
@@ -95,7 +95,7 @@ def confusionMatAndFScores(targets,predictions,classes="D:\dionigi\Documents\Pyt
 
         return fig
 
-def classesDistribution(dataSet,classes="D:\dionigi\Documents\Python scripts\\aml2025-group-08\docs\classes.txt"):
+def classesDistribution(dataSet,classes="D:\dionigi\Documents\Python scripts\\aml2025-group-08\docs\classes5.txt"):
     
     train = dataSet[0][0]
     test=dataSet[1][0]

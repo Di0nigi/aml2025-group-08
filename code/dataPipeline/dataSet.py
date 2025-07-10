@@ -279,7 +279,7 @@ def splitDataset(dataset, trainRatio=0.8):
 def getLoaders(datasets,batch):
     out=[]
     for dataset in datasets:
-        out.append(DataLoader(dataset,batch_size=batch,shuffle=False,num_workers=0, pin_memory=False))
+        out.append(DataLoader(dataset,batch_size=batch,shuffle=False))
     return out
 
 # gets the data path split and batches returns dataloaders
@@ -330,11 +330,11 @@ def dataPipeline(path,split,batches=1,classes=9):
 
 #print(loadData("D:\dionigi\Documents\Python scripts\\aml2025Data\data"))
 def main ():
-    #files=loadData("D:\dionigi\Documents\Python scripts\\aml2025Data\data")
+    files=loadData("D:\dionigi\Documents\Python scripts\\aml2025Data\data5")
     #dataPipeline("D:\dionigi\Documents\Python scripts\\aml2025Data\dataNorm",split=0.8)
-    #data=normDataset(files)
+    data=normDataset(files)
 
-    #saveData(data[0],data[1],"D:\dionigi\Documents\Python scripts\\aml2025Data\dataNorm")
+    saveData(data[0],data[1],"D:\dionigi\Documents\Python scripts\\aml2025Data\dataNorm5")
     
 
     return "done"

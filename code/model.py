@@ -1,18 +1,20 @@
 import torch.nn as nn
 import torch
 import dataPipeline.evaluationUtils as ev
-from torchvision.models import resnet50, ResNet50_Weights, resnet18, ResNet18_Weights
+from torchvision.models import resnet50, ResNet50_Weights, resnet18, ResNet18_Weights, resnet34, ResNet34_Weights, mobilenet_v2, MobileNet_V2_Weights
 from transformers import BertTokenizer, BertModel, BertConfig
 from dataPipeline.embeddingUtils import embPipeline,addClsTkCons
 from dataPipeline.dataSet import dataPipeline
 from torch_geometric.nn import GCNConv 
 from torch_geometric.data import Data,Batch
 from transformers.models.bert.modeling_bert import BertLayer
+import gc
 
 class model(nn.Module):
-    def __init__(self,backbone,device,numLayers=12, dimEmbeddings=5544, gnn_dim=768,dropout_rate=0.1, num_classes=9):
+    def __init__(self,backbone,device,numLayers=12, dimEmbeddings=6312, gnn_dim=768,dropout_rate=0.1, num_classes=5):
 
         #7080
+        #5544
 
         self.bestVal=0
 
@@ -22,6 +24,8 @@ class model(nn.Module):
         self.loaded=False
         
         self.backBone = backbone
+
+        self.pool =  nn.AdaptiveAvgPool2d((1, 1)) 
 
         self.dev = device
 
@@ -68,12 +72,19 @@ class model(nn.Module):
 
         # Backbone pass, extract CNN features
         extractedFeatures = self.backBone(im)
+        extractedFeatures = self.pool(extractedFeatures)
+        extractedFeatures = extractedFeatures.view(extractedFeatures.size(0), -1)
+        #print(extractedFeatures.shape)
 
         # Embeddings computations
+
         self.cls=self.cls.to(self.dev)
+        
         embeddings = embPipeline(extractedFeatures,graph,self.cls)
+        
         #print(type(embeddings))
         embeddings = torch.stack(embeddings)
+        #print(embeddings.shape)
         
         embeddings=self.embed(embeddings)
         #print(embeddings.shape)
@@ -99,6 +110,8 @@ class model(nn.Module):
 
 
         logits = self.classifier(cls_output)
+
+        #print("forward")
 
 
         return logits
@@ -217,11 +230,12 @@ class model(nn.Module):
             valAccList.append(accuracy)
 
             print(f"Val Loss: {avgEvalLoss:.4f}, Val Accuracy: {accuracy*100:.4f}%\n")
+
             if avgEvalLoss < best_val_loss:
                 best_val_loss = avgEvalLoss
                 epochs_no_improve = 0
                 best_model_state = self.state_dict()
-                self.bestVal = best_val_loss  
+                self.bestVal = accuracy*100  
             else:
                 epochs_no_improve += 1
                 if epochs_no_improve >= patience:
@@ -232,9 +246,18 @@ class model(nn.Module):
         return  [trainLossList, trainAccList , valLossList, valAccList], [predList, targetList] 
     
     def predict(self,data):
-        if self.loaded:
-            pass
-        return
+        ret = []
+        correct =0
+        total =0
+        for x,t in data:
+            y = self.forward(x)
+            ret.append(y)
+            preds = y.argmax(dim=1)        
+            correct += (preds == t).sum().item()
+            total += t.numel()
+        acc = correct/total
+        
+        return ret, acc
     
     def save(self,path):
         torch.save(self.state_dict(), path)
@@ -317,8 +340,6 @@ class BertGraphEncoder(BertLayer):
         #if hidden_states.is_bool():
         #hidden_states = hidden_states.float()
 
-
-        
         self_attention_outputs = self.attention(hidden_states)
         
 
@@ -329,7 +350,7 @@ class BertGraphEncoder(BertLayer):
         B, L, D = attention_output.shape
 
         graphBatched = Batch.from_data_list([Data(x=attention_output[i], edge_index=edge_index[i].t().contiguous()) for i in range(edge_index.size(0))])
-        graphBatched = graphBatched.to( self.dev)
+        graphBatched = graphBatched.to(self.dev)
         #gnn_input = attention_output.reshape(B * L, D)
         
         gnn_output = self.gNN(graphBatched.x, graphBatched.edge_index)
@@ -363,8 +384,7 @@ def weightDataSet(dataSet):
 
     # Compute weights: inverse frequency
     weights = 1.0 / classCounts.float()
-    weights = weights / weights.sum()  # optional normalization
-
+    weights = weights / weights.sum()  
     return weights
 
        
@@ -373,22 +393,22 @@ def main():
     if torch.cuda.is_available():
         print("CUDA enabled")
         device = torch.device("cuda")
+        print(torch.cuda.get_device_name(device))
     else:
         print("CUDA not available")
         device = torch.device("cpu")
     
     #device = torch.device("cpu")
 
-    
-    
-    data = dataPipeline("D:\dionigi\Documents\Python scripts\\aml2025Data\dataNorm",split=0.8,batches=1,classes=9)
+
+    data = dataPipeline("D:\dionigi\Documents\Python scripts\\aml2025Data\dataNorm5",split=0.8,batches=16,classes=5)
 
     #ev.classesDistribution(data)
 
     classWeights = weightDataSet(data)
 
     #resnet = resnet50(weights=ResNet50_Weights.DEFAULT)
-    resnet = resnet18(weights=ResNet18_Weights.DEFAULT)
+    resnet = mobilenet_v2(weights=MobileNet_V2_Weights.DEFAULT)
     modules = list(resnet.children())[:-1]
     featureExtractor = nn.Sequential(*modules)
 
@@ -396,18 +416,16 @@ def main():
     # Output shape: torch.Size([1, 2048, 1, 1])
 
     #torch.cuda.empty_cache()
-    #dummy = torch.randn(8, 768, device='cuda')
-    #dummy = dummy @ dummy.T
-    # del dummy
-    # torch.cuda.synchronize()
-
+    #torch.cuda.ipc_collect()
+    
     mT=model(backbone=featureExtractor,device=device,numLayers=6,dropout_rate=0.5)
     mT.to(device)
 
+
     lossFunction = torch.nn.CrossEntropyLoss(weight=classWeights.to(device))
     optimizer = torch.optim.AdamW(mT.parameters(), lr=1e-05, weight_decay= 1e-05)
-
-    res =mT.trainL(dataLoaders=data,lossFunc=lossFunction,optimizer=optimizer,epochs=15,patience=3)
+    #for t in range(3):
+    res =mT.trainL(dataLoaders=data,lossFunc=lossFunction,optimizer=optimizer,epochs=100,patience=5)
     mT.save(path="D:\dionigi\Documents\Python scripts\\aml2025Data\models\\bestModel.pth")
     print(mT.bestVal)
 
@@ -426,6 +444,10 @@ def main():
     #ev.confusionMatAndFScores(targs,pred)
 
     ev.displayData(res)
+
+    #del mT
+    #torch.cuda.empty_cache()
+    #gc.collect()
 
     return "done"
 

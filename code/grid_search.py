@@ -23,16 +23,17 @@ def grid_search_hyperparameters(model_class, dataset_path, device, param_grid, e
     train_data, val_data = dataPipeline(dataset_path, split=0.8, batches=batches, classes=classes)
     weightsData = weightDataSet([train_data,val_data])
     
-    # Initialize backbone (ResNet50) once
-    resnet = resnet18(weights=ResNet18_Weights.DEFAULT)
-    modules = list(resnet.children())[:-1]
-    feature_extractor = nn.Sequential(*modules)
+    # Initialize backbone (ResNet18) once
+    
     
     for i, params in enumerate(param_combinations):
         param_dict = dict(zip(param_names, params))
         print(f"\nTesting parameters {i+1}/{len(param_combinations)}: {param_dict}")
         
         try:
+            resnet = resnet18(weights=ResNet18_Weights.DEFAULT)
+            modules = list(resnet.children())[:-1]
+            feature_extractor = nn.Sequential(*modules)
             # Separate model parameters from optimizer parameters
             model_params = {k: v for k, v in param_dict.items() 
                           if k not in ['lr', 'weight_decay']}
@@ -60,6 +61,8 @@ def grid_search_hyperparameters(model_class, dataset_path, device, param_grid, e
                 epochs=epochs,
                 patience=3
             )
+
+            model_instance.save(f"D:\dionigi\Documents\Python scripts\\aml2025Data\models\\bestVal{model_instance.bestVal}.pth")
             
             # Get final validation accuracy
             val_accuracy = model_instance.bestVal  #train_results[3][-1]  # Last validation accuracy
@@ -105,11 +108,17 @@ def grid_search_hyperparameters(model_class, dataset_path, device, param_grid, e
 
 def main():
     # Define parameter grid
+    '''param_grid = {
+        'lr': [1e-5],                    # optimizer parameter
+        'weight_decay': [1e-5],          # optimizer parameter
+        'dropout_rate': [0.3,0.5],       # model parameter
+        'numLayers': [4,6]                # model parameter (BERT layers)
+    }'''
     param_grid = {
         'lr': [1e-4, 1e-5],                    # optimizer parameter
         'weight_decay': [1e-4, 1e-5],          # optimizer parameter
         'dropout_rate': [0.1, 0.3, 0.5],       # model parameter
-        'numLayers': [2, 4, 6]                # model parameter (BERT layers)
+        'numLayers': [2, 4, 6]                 # model parameter (BERT layers)
     }
     # Define device
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -120,7 +129,7 @@ def main():
         dataset_path="D:\dionigi\Documents\Python scripts\\aml2025Data\dataNorm",
         device=device,
         param_grid=param_grid,
-        epochs=15,
+        epochs=100,
         batches=16,
         classes=9
     )
