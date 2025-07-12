@@ -1,0 +1,518 @@
+[Running] python -u "d:\dionigi\Documents\Python scripts\aml2025-group-08\code\grid_search.py"
+
+Testing parameters 1/18: {'lr': 1e-05, 'weight_decay': 0.0001, 'dropout_rate': 0.2, 'numLayers': 2}
+Epoch [1/100]
+Train Loss: 0.1252, Train Accuracy: 18.1493%
+Val Loss: 1.5775, Val Accuracy: 29.1169%
+
+Epoch [2/100]
+Train Loss: 0.0737, Train Accuracy: 51.3433%
+Val Loss: 0.9035, Val Accuracy: 64.4391%
+
+Epoch [3/100]
+Train Loss: 0.0339, Train Accuracy: 78.7463%
+Val Loss: 0.5081, Val Accuracy: 80.4296%
+
+Epoch [4/100]
+Train Loss: 0.0172, Train Accuracy: 89.1940%
+Val Loss: 0.3324, Val Accuracy: 88.0668%
+
+Epoch [5/100]
+Train Loss: 0.0090, Train Accuracy: 94.6269%
+Val Loss: 0.2425, Val Accuracy: 90.6921%
+
+Epoch [6/100]
+Train Loss: 0.0052, Train Accuracy: 97.3134%
+Val Loss: 0.2852, Val Accuracy: 89.7375%
+
+Epoch [7/100]
+Train Loss: 0.0030, Train Accuracy: 98.6269%
+Val Loss: 0.2123, Val Accuracy: 91.6468%
+
+Epoch [8/100]
+Train Loss: 0.0020, Train Accuracy: 99.2239%
+Val Loss: 0.1759, Val Accuracy: 92.1241%
+
+Epoch [9/100]
+Train Loss: 0.0012, Train Accuracy: 99.8209%
+Val Loss: 0.1928, Val Accuracy: 92.3628%
+
+Epoch [10/100]
+Train Loss: 0.0009, Train Accuracy: 100.0000%
+Val Loss: 0.1741, Val Accuracy: 93.0788%
+
+Epoch [11/100]
+Train Loss: 0.0007, Train Accuracy: 100.0000%
+Val Loss: 0.1586, Val Accuracy: 94.0334%
+
+Epoch [12/100]
+Train Loss: 0.0005, Train Accuracy: 100.0000%
+Val Loss: 0.1620, Val Accuracy: 93.5561%
+
+Epoch [13/100]
+Train Loss: 0.0005, Train Accuracy: 99.9403%
+Val Loss: 0.1649, Val Accuracy: 93.7947%
+
+Epoch [14/100]
+Train Loss: 0.0004, Train Accuracy: 100.0000%
+Val Loss: 0.1654, Val Accuracy: 93.5561%
+
+Early stopping at epoch 14 due to no improvement in validation loss.
+Validation accuracy: 94.0334
+Train accuracy: 1.0000
+
+Testing parameters 2/18: {'lr': 1e-05, 'weight_decay': 0.0001, 'dropout_rate': 0.2, 'numLayers': 4}
+Epoch [1/100]
+Train Loss: 0.0689, Train Accuracy: 59.2836%
+Val Loss: 0.5088, Val Accuracy: 81.6229%
+
+Epoch [2/100]
+Train Loss: 0.0140, Train Accuracy: 92.5373%
+Val Loss: 0.1984, Val Accuracy: 92.1241%
+
+Epoch [3/100]
+Train Loss: 0.0049, Train Accuracy: 97.4328%
+Val Loss: 0.1716, Val Accuracy: 93.3174%
+
+Epoch [4/100]
+Train Loss: 0.0022, Train Accuracy: 99.1642%
+Val Loss: 0.1603, Val Accuracy: 92.3628%
+
+Epoch [5/100]
+Train Loss: 0.0010, Train Accuracy: 99.8209%
+Val Loss: 0.1738, Val Accuracy: 92.8401%
+
+Epoch [6/100]
+Train Loss: 0.0007, Train Accuracy: 99.8806%
+Val Loss: 0.1697, Val Accuracy: 92.6014%
+
+Epoch [7/100]
+Train Loss: 0.0005, Train Accuracy: 99.9403%
+Val Loss: 0.1626, Val Accuracy: 93.0788%
+
+Early stopping at epoch 7 due to no improvement in validation loss.
+Validation accuracy: 92.3628
+Train accuracy: 0.9994
+
+Testing parameters 3/18: {'lr': 1e-05, 'weight_decay': 0.0001, 'dropout_rate': 0.2, 'numLayers': 6}
+Epoch [1/100]
+Train Loss: 0.0624, Train Accuracy: 63.1642%
+Val Loss: 0.2810, Val Accuracy: 89.0215%
+
+Epoch [2/100]
+Train Loss: 0.0080, Train Accuracy: 95.1642%
+Val Loss: 0.2139, Val Accuracy: 91.1695%
+
+Epoch [3/100]
+Train Loss: 0.0031, Train Accuracy: 98.1493%
+Val Loss: 0.1786, Val Accuracy: 92.6014%
+
+Epoch [4/100]
+Train Loss: 0.0011, Train Accuracy: 99.5821%
+Val Loss: 0.1895, Val Accuracy: 92.8401%
+
+Epoch [5/100]
+Train Loss: 0.0010, Train Accuracy: 99.3433%
+Val Loss: 0.1891, Val Accuracy: 92.6014%
+
+Epoch [6/100]
+Train Loss: 0.0004, Train Accuracy: 100.0000%
+Val Loss: 0.1885, Val Accuracy: 92.8401%
+
+Early stopping at epoch 6 due to no improvement in validation loss.
+Validation accuracy: 92.6014
+Train accuracy: 1.0000
+
+Testing parameters 4/18: {'lr': 1e-05, 'weight_decay': 0.0001, 'dropout_rate': 0.3, 'numLayers': 2}
+Epoch [1/100]
+Train Loss: 0.0649, Train Accuracy: 65.7313%
+Val Loss: 0.2687, Val Accuracy: 90.6921%
+
+Epoch [2/100]
+Train Loss: 0.0083, Train Accuracy: 98.0896%
+Val Loss: 0.1411, Val Accuracy: 93.0788%
+
+Epoch [3/100]
+Train Loss: 0.0028, Train Accuracy: 99.5821%
+Val Loss: 0.1303, Val Accuracy: 93.7947%
+
+Epoch [4/100]
+Train Loss: 0.0015, Train Accuracy: 100.0000%
+Val Loss: 0.1292, Val Accuracy: 93.5561%
+
+Epoch [5/100]
+Train Loss: 0.0009, Train Accuracy: 99.9403%
+Val Loss: 0.1272, Val Accuracy: 93.7947%
+
+Epoch [6/100]
+Train Loss: 0.0006, Train Accuracy: 100.0000%
+Val Loss: 0.1341, Val Accuracy: 94.0334%
+
+Epoch [7/100]
+Train Loss: 0.0005, Train Accuracy: 100.0000%
+Val Loss: 0.1349, Val Accuracy: 94.0334%
+
+Epoch [8/100]
+Train Loss: 0.0004, Train Accuracy: 100.0000%
+Val Loss: 0.1456, Val Accuracy: 93.7947%
+
+Early stopping at epoch 8 due to no improvement in validation loss.
+Validation accuracy: 93.7947
+Train accuracy: 1.0000
+
+Testing parameters 5/18: {'lr': 1e-05, 'weight_decay': 0.0001, 'dropout_rate': 0.3, 'numLayers': 4}
+Epoch [1/100]
+Train Loss: 0.0471, Train Accuracy: 78.2090%
+Val Loss: 0.1403, Val Accuracy: 93.7947%
+
+Epoch [2/100]
+Train Loss: 0.0034, Train Accuracy: 99.7612%
+Val Loss: 0.1082, Val Accuracy: 94.7494%
+
+Epoch [3/100]
+Train Loss: 0.0012, Train Accuracy: 100.0000%
+Val Loss: 0.1211, Val Accuracy: 94.9881%
+
+Epoch [4/100]
+Train Loss: 0.0007, Train Accuracy: 99.8806%
+Val Loss: 0.1213, Val Accuracy: 94.2721%
+
+Epoch [5/100]
+Train Loss: 0.0005, Train Accuracy: 100.0000%
+Val Loss: 0.1404, Val Accuracy: 93.5561%
+
+Early stopping at epoch 5 due to no improvement in validation loss.
+Validation accuracy: 94.7494
+Train accuracy: 1.0000
+
+Testing parameters 6/18: {'lr': 1e-05, 'weight_decay': 0.0001, 'dropout_rate': 0.3, 'numLayers': 6}
+Epoch [1/100]
+Train Loss: 0.0379, Train Accuracy: 81.6716%
+Val Loss: 0.1352, Val Accuracy: 93.7947%
+
+Epoch [2/100]
+Train Loss: 0.0026, Train Accuracy: 99.4627%
+Val Loss: 0.1314, Val Accuracy: 93.7947%
+
+Epoch [3/100]
+Train Loss: 0.0008, Train Accuracy: 100.0000%
+Val Loss: 0.1357, Val Accuracy: 94.2721%
+
+Epoch [4/100]
+Train Loss: 0.0005, Train Accuracy: 99.9403%
+Val Loss: 0.1505, Val Accuracy: 94.2721%
+
+Epoch [5/100]
+Train Loss: 0.0005, Train Accuracy: 99.9403%
+Val Loss: 0.1401, Val Accuracy: 94.2721%
+
+Early stopping at epoch 5 due to no improvement in validation loss.
+Validation accuracy: 93.7947
+Train accuracy: 0.9994
+
+Testing parameters 7/18: {'lr': 1e-05, 'weight_decay': 0.0001, 'dropout_rate': 0.5, 'numLayers': 2}
+Epoch [1/100]
+Train Loss: 0.0584, Train Accuracy: 72.7164%
+Val Loss: 0.1817, Val Accuracy: 93.3174%
+
+Epoch [2/100]
+Train Loss: 0.0066, Train Accuracy: 99.4030%
+Val Loss: 0.1075, Val Accuracy: 94.7494%
+
+Epoch [3/100]
+Train Loss: 0.0024, Train Accuracy: 99.8806%
+Val Loss: 0.1034, Val Accuracy: 94.5107%
+
+Epoch [4/100]
+Train Loss: 0.0014, Train Accuracy: 100.0000%
+Val Loss: 0.1064, Val Accuracy: 94.5107%
+
+Epoch [5/100]
+Train Loss: 0.0008, Train Accuracy: 99.9403%
+Val Loss: 0.1164, Val Accuracy: 94.7494%
+
+Epoch [6/100]
+Train Loss: 0.0006, Train Accuracy: 100.0000%
+Val Loss: 0.1182, Val Accuracy: 94.7494%
+
+Early stopping at epoch 6 due to no improvement in validation loss.
+Validation accuracy: 94.5107
+Train accuracy: 1.0000
+
+Testing parameters 8/18: {'lr': 1e-05, 'weight_decay': 0.0001, 'dropout_rate': 0.5, 'numLayers': 4}
+Epoch [1/100]
+Train Loss: 0.0521, Train Accuracy: 74.5672%
+Val Loss: 0.1710, Val Accuracy: 92.1241%
+
+Epoch [2/100]
+Train Loss: 0.0044, Train Accuracy: 99.4627%
+Val Loss: 0.1316, Val Accuracy: 93.5561%
+
+Epoch [3/100]
+Train Loss: 0.0017, Train Accuracy: 99.9403%
+Val Loss: 0.1327, Val Accuracy: 93.7947%
+
+Epoch [4/100]
+Train Loss: 0.0009, Train Accuracy: 100.0000%
+Val Loss: 0.1267, Val Accuracy: 94.2721%
+
+Epoch [5/100]
+Train Loss: 0.0006, Train Accuracy: 100.0000%
+Val Loss: 0.1311, Val Accuracy: 93.7947%
+
+Epoch [6/100]
+Train Loss: 0.0004, Train Accuracy: 100.0000%
+Val Loss: 0.1396, Val Accuracy: 94.2721%
+
+Epoch [7/100]
+Train Loss: 0.0003, Train Accuracy: 100.0000%
+Val Loss: 0.1439, Val Accuracy: 94.2721%
+
+Early stopping at epoch 7 due to no improvement in validation loss.
+Validation accuracy: 94.2721
+Train accuracy: 1.0000
+
+Testing parameters 9/18: {'lr': 1e-05, 'weight_decay': 0.0001, 'dropout_rate': 0.5, 'numLayers': 6}
+Epoch [1/100]
+Train Loss: 0.0451, Train Accuracy: 76.7761%
+Val Loss: 0.1416, Val Accuracy: 94.0334%
+
+Epoch [2/100]
+Train Loss: 0.0026, Train Accuracy: 99.7612%
+Val Loss: 0.1092, Val Accuracy: 94.9881%
+
+Epoch [3/100]
+Train Loss: 0.0010, Train Accuracy: 100.0000%
+Val Loss: 0.1301, Val Accuracy: 94.7494%
+
+Epoch [4/100]
+Train Loss: 0.0006, Train Accuracy: 100.0000%
+Val Loss: 0.1354, Val Accuracy: 94.5107%
+
+Epoch [5/100]
+Train Loss: 0.0004, Train Accuracy: 100.0000%
+Val Loss: 0.1437, Val Accuracy: 94.5107%
+
+Early stopping at epoch 5 due to no improvement in validation loss.
+Validation accuracy: 94.9881
+Train accuracy: 1.0000
+
+Testing parameters 10/18: {'lr': 1e-05, 'weight_decay': 1e-05, 'dropout_rate': 0.2, 'numLayers': 2}
+Epoch [1/100]
+Train Loss: 0.0384, Train Accuracy: 83.2836%
+Val Loss: 0.1296, Val Accuracy: 95.2267%
+
+Epoch [2/100]
+Train Loss: 0.0023, Train Accuracy: 99.9403%
+Val Loss: 0.1052, Val Accuracy: 94.9881%
+
+Epoch [3/100]
+Train Loss: 0.0010, Train Accuracy: 100.0000%
+Val Loss: 0.1087, Val Accuracy: 94.9881%
+
+Epoch [4/100]
+Train Loss: 0.0006, Train Accuracy: 100.0000%
+Val Loss: 0.1111, Val Accuracy: 94.9881%
+
+Epoch [5/100]
+Train Loss: 0.0004, Train Accuracy: 100.0000%
+Val Loss: 0.1150, Val Accuracy: 94.9881%
+
+Early stopping at epoch 5 due to no improvement in validation loss.
+Validation accuracy: 94.9881
+Train accuracy: 1.0000
+
+Testing parameters 11/18: {'lr': 1e-05, 'weight_decay': 1e-05, 'dropout_rate': 0.2, 'numLayers': 4}
+Epoch [1/100]
+Train Loss: 0.0269, Train Accuracy: 89.0746%
+Val Loss: 0.0963, Val Accuracy: 95.4654%
+
+Epoch [2/100]
+Train Loss: 0.0013, Train Accuracy: 100.0000%
+Val Loss: 0.0955, Val Accuracy: 95.4654%
+
+Epoch [3/100]
+Train Loss: 0.0006, Train Accuracy: 100.0000%
+Val Loss: 0.1039, Val Accuracy: 95.4654%
+
+Epoch [4/100]
+Train Loss: 0.0004, Train Accuracy: 100.0000%
+Val Loss: 0.1122, Val Accuracy: 95.4654%
+
+Epoch [5/100]
+Train Loss: 0.0003, Train Accuracy: 100.0000%
+Val Loss: 0.1141, Val Accuracy: 95.4654%
+
+Early stopping at epoch 5 due to no improvement in validation loss.
+Validation accuracy: 95.4654
+Train accuracy: 1.0000
+
+Testing parameters 12/18: {'lr': 1e-05, 'weight_decay': 1e-05, 'dropout_rate': 0.2, 'numLayers': 6}
+Epoch [1/100]
+Train Loss: 0.0278, Train Accuracy: 89.0149%
+Val Loss: 0.1116, Val Accuracy: 94.9881%
+
+Epoch [2/100]
+Train Loss: 0.0011, Train Accuracy: 100.0000%
+Val Loss: 0.1235, Val Accuracy: 94.9881%
+
+Epoch [3/100]
+Train Loss: 0.0006, Train Accuracy: 100.0000%
+Val Loss: 0.1151, Val Accuracy: 95.7041%
+
+Epoch [4/100]
+Train Loss: 0.0003, Train Accuracy: 100.0000%
+Val Loss: 0.1327, Val Accuracy: 94.9881%
+
+Early stopping at epoch 4 due to no improvement in validation loss.
+Validation accuracy: 94.9881
+Train accuracy: 1.0000
+
+Testing parameters 13/18: {'lr': 1e-05, 'weight_decay': 1e-05, 'dropout_rate': 0.3, 'numLayers': 2}
+Epoch [1/100]
+Train Loss: 0.0408, Train Accuracy: 83.4627%
+Val Loss: 0.1223, Val Accuracy: 94.0334%
+
+Epoch [2/100]
+Train Loss: 0.0024, Train Accuracy: 100.0000%
+Val Loss: 0.1038, Val Accuracy: 94.5107%
+
+Epoch [3/100]
+Train Loss: 0.0011, Train Accuracy: 100.0000%
+Val Loss: 0.1095, Val Accuracy: 94.5107%
+
+Epoch [4/100]
+Train Loss: 0.0006, Train Accuracy: 100.0000%
+Val Loss: 0.1101, Val Accuracy: 94.7494%
+
+Epoch [5/100]
+Train Loss: 0.0004, Train Accuracy: 100.0000%
+Val Loss: 0.1132, Val Accuracy: 94.9881%
+
+Early stopping at epoch 5 due to no improvement in validation loss.
+Validation accuracy: 94.5107
+Train accuracy: 1.0000
+
+Testing parameters 14/18: {'lr': 1e-05, 'weight_decay': 1e-05, 'dropout_rate': 0.3, 'numLayers': 4}
+Epoch [1/100]
+Train Loss: 0.0250, Train Accuracy: 89.1343%
+Val Loss: 0.1170, Val Accuracy: 94.5107%
+
+Epoch [2/100]
+Train Loss: 0.0012, Train Accuracy: 100.0000%
+Val Loss: 0.1243, Val Accuracy: 94.7494%
+
+Epoch [3/100]
+Train Loss: 0.0006, Train Accuracy: 100.0000%
+Val Loss: 0.1259, Val Accuracy: 94.5107%
+
+Epoch [4/100]
+Train Loss: 0.0004, Train Accuracy: 100.0000%
+Val Loss: 0.1275, Val Accuracy: 94.7494%
+
+Early stopping at epoch 4 due to no improvement in validation loss.
+Validation accuracy: 94.5107
+Train accuracy: 1.0000
+
+Testing parameters 15/18: {'lr': 1e-05, 'weight_decay': 1e-05, 'dropout_rate': 0.3, 'numLayers': 6}
+Epoch [1/100]
+Train Loss: 0.0261, Train Accuracy: 89.4328%
+Val Loss: 0.1018, Val Accuracy: 94.7494%
+
+Epoch [2/100]
+Train Loss: 0.0011, Train Accuracy: 100.0000%
+Val Loss: 0.0982, Val Accuracy: 95.4654%
+
+Epoch [3/100]
+Train Loss: 0.0006, Train Accuracy: 100.0000%
+Val Loss: 0.1113, Val Accuracy: 95.4654%
+
+Epoch [4/100]
+Train Loss: 0.0003, Train Accuracy: 100.0000%
+Val Loss: 0.1164, Val Accuracy: 95.2267%
+
+Epoch [5/100]
+Train Loss: 0.0002, Train Accuracy: 100.0000%
+Val Loss: 0.1179, Val Accuracy: 95.4654%
+
+Early stopping at epoch 5 due to no improvement in validation loss.
+Validation accuracy: 95.4654
+Train accuracy: 1.0000
+
+Testing parameters 16/18: {'lr': 1e-05, 'weight_decay': 1e-05, 'dropout_rate': 0.5, 'numLayers': 2}
+Epoch [1/100]
+Train Loss: 0.0491, Train Accuracy: 80.7164%
+Val Loss: 0.1288, Val Accuracy: 95.4654%
+
+Epoch [2/100]
+Train Loss: 0.0035, Train Accuracy: 99.9403%
+Val Loss: 0.1014, Val Accuracy: 96.1814%
+
+Epoch [3/100]
+Train Loss: 0.0014, Train Accuracy: 100.0000%
+Val Loss: 0.1044, Val Accuracy: 95.7041%
+
+Epoch [4/100]
+Train Loss: 0.0008, Train Accuracy: 100.0000%
+Val Loss: 0.1076, Val Accuracy: 95.4654%
+
+Epoch [5/100]
+Train Loss: 0.0005, Train Accuracy: 100.0000%
+Val Loss: 0.1102, Val Accuracy: 95.4654%
+
+Early stopping at epoch 5 due to no improvement in validation loss.
+Validation accuracy: 96.1814
+Train accuracy: 1.0000
+
+Testing parameters 17/18: {'lr': 1e-05, 'weight_decay': 1e-05, 'dropout_rate': 0.5, 'numLayers': 4}
+Epoch [1/100]
+Train Loss: 0.0307, Train Accuracy: 87.4030%
+Val Loss: 0.1165, Val Accuracy: 94.7494%
+
+Epoch [2/100]
+Train Loss: 0.0019, Train Accuracy: 100.0000%
+Val Loss: 0.1218, Val Accuracy: 94.7494%
+
+Epoch [3/100]
+Train Loss: 0.0008, Train Accuracy: 100.0000%
+Val Loss: 0.1255, Val Accuracy: 94.7494%
+
+Epoch [4/100]
+Train Loss: 0.0005, Train Accuracy: 100.0000%
+Val Loss: 0.1289, Val Accuracy: 94.7494%
+
+Early stopping at epoch 4 due to no improvement in validation loss.
+Validation accuracy: 94.7494
+Train accuracy: 1.0000
+
+Testing parameters 18/18: {'lr': 1e-05, 'weight_decay': 1e-05, 'dropout_rate': 0.5, 'numLayers': 6}
+Epoch [1/100]
+Train Loss: 0.0355, Train Accuracy: 84.2388%
+Val Loss: 0.1165, Val Accuracy: 94.5107%
+
+Epoch [2/100]
+Train Loss: 0.0015, Train Accuracy: 99.9403%
+Val Loss: 0.1061, Val Accuracy: 94.9881%
+
+Epoch [3/100]
+Train Loss: 0.0007, Train Accuracy: 100.0000%
+Val Loss: 0.1210, Val Accuracy: 94.5107%
+
+Epoch [4/100]
+Train Loss: 0.0005, Train Accuracy: 99.9403%
+Val Loss: 0.1246, Val Accuracy: 94.5107%
+
+Epoch [5/100]
+Train Loss: 0.0003, Train Accuracy: 100.0000%
+Val Loss: 0.1208, Val Accuracy: 94.5107%
+
+Early stopping at epoch 5 due to no improvement in validation loss.
+Validation accuracy: 94.9881
+Train accuracy: 1.0000
+
+Best parameters:
+{'lr': 1e-05, 'weight_decay': 1e-05, 'dropout_rate': 0.5, 'numLayers': 2}
+Best validation accuracy: 96.1814
+Best train accuracy: 1.0000
+
+[Done] exited with code=0 in 9340.252 seconds

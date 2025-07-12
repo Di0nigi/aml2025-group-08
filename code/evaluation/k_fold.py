@@ -3,14 +3,15 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
 from torchvision import transforms
-from torchvision.models import resnet50, ResNet50_Weights
+from torchvision.models import resnet50, ResNet50_Weights, resnet18, ResNet18_Weights
 from dataPipeline.dataSet import dataPipeline
-from model import model
+from model.model import model
 import numpy as np
 import os
 from PIL import Image
 import dataPipeline.embeddingUtils as eu
 import torch.nn.functional as F
+import mediapipe as mp
 
 
 def load_full_dataset(path, classes=12):
@@ -75,7 +76,7 @@ def stratified_k_fold_evaluation(dataset_path, model_class, device, k=5, batches
     fold_results = []
     
     # Initialize backbone (ResNet50) once
-    resnet = resnet50(weights=ResNet50_Weights.DEFAULT)
+    resnet = resnet18(weights=ResNet18_Weights.DEFAULT)
     feature_extractor = nn.Sequential(*list(resnet.children())[:-1])
     
     # Get the indices for the full dataset
@@ -120,8 +121,6 @@ def stratified_k_fold_evaluation(dataset_path, model_class, device, k=5, batches
             backbone=feature_extractor, 
             device=device, 
             numLayers=6,  
-            dimEmbeddings=7080, 
-            gnn_dim=768, 
             num_classes=classes,
             dropout_rate=0.5
         )
@@ -149,6 +148,7 @@ def stratified_k_fold_evaluation(dataset_path, model_class, device, k=5, batches
             'predictions': eval_results[0],
             'targets': eval_results[1]
         }
+        model_instance.save(path=f"D:\dionigi\Documents\Python scripts\\aml2025Data\models\\bestVal{fold}_{model_instance.bestVal}.pth")
         
         fold_results.append(fold_metrics)
         
@@ -180,10 +180,10 @@ def main():
     print(f"Using device: {device}")
 
     # Dataset path
-    dataset_path = "/Users/valentinazingarello/Downloads/dataNorm 2"  
+    dataset_path = "D:\dionigi\Documents\Python scripts\\aml2025Data\dataNorm"  
     
     # Cross-validation parameters
-    k_folds = 5
+    k_folds = 3
     batch_size = 16
     num_classes = 9
     epochs_per_fold = 10

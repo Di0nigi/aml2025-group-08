@@ -330,11 +330,11 @@ def dataPipeline(path,split,batches=1,classes=9):
 
 #print(loadData("D:\dionigi\Documents\Python scripts\\aml2025Data\data"))
 def main ():
-    files=loadData("D:\dionigi\Documents\Python scripts\\aml2025Data\data5")
+    files=loadData("D:\dionigi\Documents\Python scripts\\aml2025Data\data")
     #dataPipeline("D:\dionigi\Documents\Python scripts\\aml2025Data\dataNorm",split=0.8)
     data=normDataset(files)
 
-    saveData(data[0],data[1],"D:\dionigi\Documents\Python scripts\\aml2025Data\dataNorm5")
+    saveData(data[0],data[1],"D:\dionigi\Documents\Python scripts\\aml2025Data\dataNorm")
     
 
     return "done"

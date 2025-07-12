@@ -1,6 +1,6 @@
 import torch.nn as nn
 import torch
-import dataPipeline.evaluationUtils as ev
+import evaluation.evaluationUtils as ev
 from torchvision.models import resnet50, ResNet50_Weights, resnet18, ResNet18_Weights, resnet34, ResNet34_Weights, mobilenet_v2, MobileNet_V2_Weights
 from transformers import BertTokenizer, BertModel, BertConfig
 from dataPipeline.embeddingUtils import embPipeline,addClsTkCons
@@ -11,10 +11,11 @@ from transformers.models.bert.modeling_bert import BertLayer
 import gc
 
 class model(nn.Module):
-    def __init__(self,backbone,device,numLayers=12, dimEmbeddings=6312, gnn_dim=768,dropout_rate=0.1, num_classes=5):
+    def __init__(self,backbone,device,numLayers=12, dimEmbeddings=5544, gnn_dim=768,dropout_rate=0.1, num_classes=9):
 
         #7080
         #5544
+        #6312
 
         self.bestVal=0
 
@@ -24,6 +25,7 @@ class model(nn.Module):
         self.loaded=False
         
         self.backBone = backbone
+
 
         self.pool =  nn.AdaptiveAvgPool2d((1, 1)) 
 
@@ -72,8 +74,8 @@ class model(nn.Module):
 
         # Backbone pass, extract CNN features
         extractedFeatures = self.backBone(im)
-        extractedFeatures = self.pool(extractedFeatures)
-        extractedFeatures = extractedFeatures.view(extractedFeatures.size(0), -1)
+        #extractedFeatures = self.pool(extractedFeatures)
+        #extractedFeatures = extractedFeatures.view(extractedFeatures.size(0), -1)
         #print(extractedFeatures.shape)
 
         # Embeddings computations
@@ -93,12 +95,15 @@ class model(nn.Module):
 
         #output = self.bert(inputs_embeds=embeddings, attention_mask=None, edge_index=edges)
 
-        #output = embeddings.unsqueeze(0)#.permute(0,2,1)   
+        #output = embeddings.unsqueeze(0)#.permute(0,2,1)
+        output1 = embeddings   
         output = embeddings
         # Pass through each transformer layer, injecting edge_index into each
         for layer_module in self.bert.encoder.layer:
             layer_outputs = layer_module(hidden_states=output, edge_index=edges)
             output = layer_outputs[0]  
+
+        output += output1
         
         #print(output.shape)
 
@@ -117,9 +122,13 @@ class model(nn.Module):
         return logits
     
     def trainL(self,dataLoaders,lossFunc, optimizer ,epochs=10,patience=5):
+        targetList=[]
+        predList=[]
 
         self.loss =lossFunc
         self.optim =optimizer
+
+        #self.load(path="D:\dionigi\Documents\Python scripts\\aml2025Data\models\\bestModel.pth")
 
         best_val_loss = float('inf')
         epochs_no_improve = 0
@@ -246,18 +255,39 @@ class model(nn.Module):
         return  [trainLossList, trainAccList , valLossList, valAccList], [predList, targetList] 
     
     def predict(self,data):
-        ret = []
+        d1,d2,d3 = data
+        
+        ret1 = []
+        ret2 = []
         correct =0
         total =0
-        for x,t in data:
-            y = self.forward(x)
-            ret.append(y)
-            preds = y.argmax(dim=1)        
-            correct += (preds == t).sum().item()
-            total += t.numel()
+        self.eval()
+        with torch.no_grad():
+            for batch1,batch2,batch3 in zip(d1,d2,d3):
+                torch.cuda.empty_cache()
+                torch.cuda.ipc_collect()
+                im, t = batch1
+                v, _ = batch2
+                e, _ = batch3
+
+                im = im.to(self.dev)
+                t = t.to(self.dev)
+                v = v.to(self.dev)
+                e = e.to(self.dev)
+
+                graph = (v, e)
+
+                y = self.forward([im, graph])
+                t = t.squeeze(1)
+                t = t.argmax(dim=1).long() 
+                ret1.append(y)
+                ret2.append(t)
+                preds = y.argmax(dim=1)        
+                correct += (preds == t).sum().item()
+                total += t.numel()
         acc = correct/total
         
-        return ret, acc
+        return acc, ret1, ret2
     
     def save(self,path):
         torch.save(self.state_dict(), path)
@@ -271,8 +301,7 @@ class model(nn.Module):
 class GraphResidualBlock(nn.Module):
     def __init__(self, in_channels, out_channels, hiddenDim):
         super().__init__()
-        # hiddenDim= 0
-        # normLayer
+        
         self.norm1 = nn.LayerNorm(hiddenDim)
         # mlp1 layer 
         self.mlp1 = nn.Sequential(
@@ -401,36 +430,48 @@ def main():
     #device = torch.device("cpu")
 
 
-    data = dataPipeline("D:\dionigi\Documents\Python scripts\\aml2025Data\dataNorm5",split=0.8,batches=16,classes=5)
+    data = dataPipeline("D:\dionigi\Documents\Python scripts\\aml2025Data\dataNorm",split=0.8,batches=16,classes=9)
 
-    #ev.classesDistribution(data)
+
+
+    ev.classesDistribution(data)
 
     classWeights = weightDataSet(data)
 
     #resnet = resnet50(weights=ResNet50_Weights.DEFAULT)
-    resnet = mobilenet_v2(weights=MobileNet_V2_Weights.DEFAULT)
+    resnet = resnet18(weights=ResNet18_Weights.DEFAULT)
     modules = list(resnet.children())[:-1]
     featureExtractor = nn.Sequential(*modules)
 
     # Input shape: whatever
     # Output shape: torch.Size([1, 2048, 1, 1])
 
-    #torch.cuda.empty_cache()
-    #torch.cuda.ipc_collect()
+    torch.cuda.empty_cache()
+    torch.cuda.ipc_collect()
     
-    mT=model(backbone=featureExtractor,device=device,numLayers=6,dropout_rate=0.5)
+    mT=model(backbone=featureExtractor,device=device,numLayers=2,dropout_rate=0.5,num_classes=5)
     mT.to(device)
 
-
+    
     lossFunction = torch.nn.CrossEntropyLoss(weight=classWeights.to(device))
     optimizer = torch.optim.AdamW(mT.parameters(), lr=1e-05, weight_decay= 1e-05)
     #for t in range(3):
+    #mT.load(path="D:\dionigi\Documents\Python scripts\\aml2025Data\models\\bestModel.pth")
+    restot=[]
+    #for _ in range(2):
     res =mT.trainL(dataLoaders=data,lossFunc=lossFunction,optimizer=optimizer,epochs=100,patience=5)
-    mT.save(path="D:\dionigi\Documents\Python scripts\\aml2025Data\models\\bestModel.pth")
+#    restot.append(res)
+    # [trainLossList, trainAccList , valLossList, valAccList], [predList, targetList] 
+    #resT=[[restot[0][0][0]+restot[1][0][0],restot[0][0][1]+restot[1][0][1],restot[0][0][2]+restot[1][0][2],restot[0][0][3]+restot[1][0][3]],[ restot[0][1][0]+ restot[1][1][0], restot[0][1][1]+ restot[1][1][1] ]]
+    mT.save(path="D:\dionigi\Documents\Python scripts\\aml2025Data\models\\bestModelD.pth")
     print(mT.bestVal)
 
+    #mT.load(path="D:\dionigi\Documents\Python scripts\\aml2025Data\models\\5model95.pth")
+    #a,p,t =mT.predict(data[0])
+    #print(a)
+
     #print([pred, targs])
-    [tL, tAcc, teL, teAcc], [pred, targs] = res
+    #[tL, tAcc, teL, teAcc], [pred, targs] = res
 
     #print(res)
 
@@ -441,7 +482,7 @@ def main():
     
     #ev.lossAndAccGraph(tL, tAcc, teL, teAcc)
 
-    #ev.confusionMatAndFScores(targs,pred)
+    #ev.confusionMatAndFScores(t,p)
 
     ev.displayData(res)
 
